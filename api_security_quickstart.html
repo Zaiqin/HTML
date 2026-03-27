@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API & App Security — Quick Start Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --ink: #0f0f0f;
+    --paper: #f5f0e8;
+    --accent: #c0392b;
+    --accent2: #2c3e7a;
+    --muted: #6b6560;
+    --rule: #d4cfc7;
+    --highlight: #fff3cd;
+    --green: #1a6b3c;
+    --mono: 'IBM Plex Mono', monospace;
+    --serif: 'DM Serif Display', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* COVER */
+  .cover {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 64px 56px 56px;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    min-height: 420px;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 320px; height: 320px;
+    border: 1px solid rgba(245,240,232,0.12);
+    border-radius: 50%;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 180px; height: 180px;
+    border: 1px solid rgba(245,240,232,0.08);
+    border-radius: 50%;
+  }
+
+  .cover-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .cover h1 {
+    font-family: var(--serif);
+    font-size: 52px;
+    line-height: 1.05;
+    max-width: 600px;
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+
+  .cover-sub {
+    font-size: 15px;
+    font-weight: 300;
+    color: rgba(245,240,232,0.7);
+    max-width: 500px;
+    margin-bottom: 40px;
+  }
+
+  .cover-toc {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    border-top: 1px solid rgba(245,240,232,0.15);
+    padding-top: 28px;
+    max-width: 660px;
+  }
+
+  .cover-toc-item {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    color: rgba(245,240,232,0.5);
+    padding: 2px 0;
+  }
+
+  .cover-toc-item span {
+    color: rgba(245,240,232,0.25);
+    margin-right: 6px;
+  }
+
+  /* LAYOUT */
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 40px;
+  }
+
+  /* SECTION HEADERS */
+  .section {
+    margin-bottom: 48px;
+    page-break-inside: avoid;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 26px;
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  .section-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  /* CARDS */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .card-grid-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .card {
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px;
+    position: relative;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+
+  .card p {
+    font-size: 13px;
+    color: #3a3a3a;
+    line-height: 1.55;
+  }
+
+  .card-accent {
+    border-left: 3px solid var(--accent);
+  }
+
+  .card-green {
+    border-left: 3px solid var(--green);
+  }
+
+  .card-blue {
+    border-left: 3px solid var(--accent2);
+  }
+
+  /* RISK MATRIX */
+  .risk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin-bottom: 16px;
+  }
+
+  .risk-table th {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  .risk-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  .risk-table tr:nth-child(even) td {
+    background: rgba(0,0,0,0.02);
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 2px;
+  }
+
+  .badge-crit { background: #fde8e8; color: #c0392b; }
+  .badge-high { background: #fdf0e0; color: #d35400; }
+  .badge-med  { background: #fdf8e0; color: #b7770d; }
+  .badge-low  { background: #e8f5e9; color: #1a6b3c; }
+
+  /* FLOW DIAGRAMS */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .flow-step {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .flow-step.alt {
+    background: var(--accent2);
+  }
+
+  .flow-step.danger {
+    background: var(--accent);
+  }
+
+  .flow-arrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--muted);
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+
+  /* CHECKLISTS */
+  .checklist {
+    list-style: none;
+    margin-bottom: 12px;
+  }
+
+  .checklist li {
+    padding: 7px 0 7px 28px;
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+    color: #2a2a2a;
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+
+  .checklist li::before {
+    content: '□';
+    position: absolute;
+    left: 6px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .checklist li strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* CALLOUTS */
+  .callout {
+    border-left: 4px solid var(--accent);
+    background: #fdf3f2;
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .callout.info {
+    border-color: var(--accent2);
+    background: #f0f3fb;
+  }
+
+  .callout.success {
+    border-color: var(--green);
+    background: #f0f9f4;
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .callout.info .callout-label { color: var(--accent2); }
+  .callout.success .callout-label { color: var(--green); }
+
+  .callout p { font-size: 13px; line-height: 1.5; }
+
+  /* CODE */
+  code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: #e8e3db;
+    padding: 2px 5px;
+    border-radius: 2px;
+    color: var(--accent);
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 32px 0;
+  }
+
+  /* TOP 10 LIST */
+  .owasp-list {
+    counter-reset: owasp;
+    list-style: none;
+  }
+
+  .owasp-item {
+    counter-increment: owasp;
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 12px;
+    align-items: start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .owasp-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--rule);
+    line-height: 1;
+    padding-top: 2px;
+  }
+
+  .owasp-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .owasp-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  /* COLUMNS */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* PRINT */
+  @media print {
+    body { font-size: 12px; }
+    .cover { min-height: unset; }
+    .section { page-break-inside: avoid; }
+  }
+
+  /* FOOTER STRIP */
+  .page-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: right;
+    margin-bottom: 4px;
+  }
+
+  .mini-header {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 10px;
+    margin-top: 16px;
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    color: var(--muted);
+  }
+
+  .tag.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-eyebrow">Quick Start Guide · 2025 Edition</div>
+  <h1>API & Application Security</h1>
+  <p class="cover-sub">A structured overview of modern security architecture, threat models, authentication, vulnerabilities, and defensive practices — before you dive into the full material.</p>
+  <div class="cover-toc">
+    <div class="cover-toc-item"><span>01</span> Architecture &amp; Threat Surface</div>
+    <div class="cover-toc-item"><span>02</span> HTTP Protocol Essentials</div>
+    <div class="cover-toc-item"><span>03</span> Authentication &amp; Authorization</div>
+    <div class="cover-toc-item"><span>04</span> OWASP Top 10 (Web &amp; API)</div>
+    <div class="cover-toc-item"><span>05</span> API-Specific Failures</div>
+    <div class="cover-toc-item"><span>06</span> Cloud &amp; Infrastructure</div>
+    <div class="cover-toc-item"><span>07</span> Secure Design Principles</div>
+    <div class="cover-toc-item"><span>08</span> Client-Side Security</div>
+    <div class="cover-toc-item"><span>09</span> Secrets Management</div>
+    <div class="cover-toc-item"><span>10</span> Logging &amp; Detection</div>
+    <div class="cover-toc-item"><span>11</span> DevSecOps &amp; SDLC</div>
+    <div class="cover-toc-item"><span>12</span> Governance &amp; Standards</div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- SECTION 1: ARCHITECTURE -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2 class="section-title">Architecture & Threat Surface</h2>
+    <span class="section-tag">Foundations</span>
+  </div>
+
+  <div class="card-grid card-grid-3">
+    <div class="card card-blue">
+      <div class="card-title">Monolithic</div>
+      <p>Single deployable unit. Centralized controls but "all eggs in one basket" — a breach can expose everything including DB credentials.</p>
+    </div>
+    <div class="card card-blue">
+      <div class="card-title">Microservices</div>
+      <p>Independent services via REST/gRPC. Enables micro-segmentation but each service connection needs its own auth &amp; authz controls.</p>
+    </div>
+    <div class="card card-blue">
+      <div class="card-title">Serverless (FaaS)</div>
+      <p>Ephemeral, event-driven. Smaller malware persistence surface but vulnerable to "Denial of Wallet" via excessive invocations.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">Key Insight</div>
+    <p>Traditional AppSec tools (SAST/DAST) are <strong>insufficient for APIs</strong>. Network firewalls inspect IPs/ports but cannot prevent attacks targeting application logic. APIs expand the attack surface with direct paths to sensitive data.</p>
+  </div>
+
+  <div class="mini-header">Trust Boundaries — Where Attacks Happen</div>
+  <div class="flow">
+    <div class="flow-step danger">Browser (Untrusted)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">WAF / CDN</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step alt">API Gateway</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Microservices</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Database</div>
+  </div>
+  <p style="font-size:12px; color:var(--muted); margin-top:6px;">Each arrow is a trust boundary. Each boundary is an attack surface. Zero Trust = verify at every hop.</p>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 2: HTTP -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2 class="section-title">HTTP Protocol Essentials</h2>
+    <span class="section-tag">Protocol</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="mini-header">Attack Signals in HTTP</div>
+      <div class="risk-table" style="font-size:12px;">
+        <table style="width:100%; border-collapse:collapse;">
+          <tr style="background:var(--ink); color:var(--paper);">
+            <th style="padding:8px 10px; font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-align:left;">Signal</th>
+            <th style="padding:8px 10px; font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-align:left;">What It Means</th>
+          </tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--rule);"><code>404</code> bursts</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">Scanning / reconnaissance</td></tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--rule);"><code>500</code> spikes</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">Successful probing (e.g. SQLi)</td></tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--rule);"><code>OPTIONS</code> calls</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">Server fingerprinting</td></tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--rule);"><code>PUT/DELETE</code> unexpected</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">Attempted resource manipulation</td></tr>
+          <tr><td style="padding:8px 10px;">Spoofed User-Agent</td><td style="padding:8px 10px;">Bypass detection filters</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="mini-header">Cookie Security Flags</div>
+      <ul class="checklist">
+        <li><strong>HttpOnly</strong> — blocks JavaScript access (mitigates XSS token theft)</li>
+        <li><strong>Secure</strong> — only sent over HTTPS</li>
+        <li><strong>SameSite=Strict/Lax</strong> — mitigates CSRF</li>
+      </ul>
+      <div class="callout info" style="margin-top:12px;">
+        <div class="callout-label">HTTP/2 &amp; 3 Visibility Gap</div>
+        <p>Binary framing, HPACK compression, and QUIC encryption make traditional network inspection much harder. Inspection must move to the endpoint or authorized TLS termination points.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 3: AUTHN / AUTHZ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2 class="section-title">Authentication &amp; Authorization</h2>
+    <span class="section-tag">Identity</span>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-label">Core Distinction</div>
+    <p><strong>Authentication</strong> = "Are you who you say you are?" &nbsp;|&nbsp; <strong>Authorization</strong> = "What are you allowed to do?" — Coupling them leads to privilege escalation. Successful AuthN does NOT mean open access.</p>
+  </div>
+
+  <div class="two-col" style="margin-top:16px;">
+    <div>
+      <div class="mini-header">MFA Strength Ranking</div>
+      <ol class="owasp-list">
+        <div class="owasp-item">
+          <div class="owasp-num">1</div>
+          <div><div class="owasp-name">FIDO2 / Passkeys</div><div class="owasp-desc">Cryptographically bound to domain. Technically un-phishable — device refuses if domain doesn't match.</div></div>
+          <span class="badge badge-low">Strongest</span>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">2</div>
+          <div><div class="owasp-name">TOTP (Authenticator App)</div><div class="owasp-desc">Time-based codes. Immune to SIM swap but vulnerable to real-time AiTM phishing proxies.</div></div>
+          <span class="badge badge-med">Good</span>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">3</div>
+          <div><div class="owasp-name">Push Notifications</div><div class="owasp-desc">Vulnerable to MFA Fatigue (prompt bombing). Mitigated by number matching.</div></div>
+          <span class="badge badge-high">Weak</span>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">4</div>
+          <div><div class="owasp-name">SMS / Voice</div><div class="owasp-desc">Vulnerable to SIM swapping and SS7 interception. Deprecated by NIST in 2016.</div></div>
+          <span class="badge badge-crit">Weakest</span>
+        </div>
+      </ol>
+    </div>
+    <div>
+      <div class="mini-header">JWT — Critical Validations</div>
+      <ul class="checklist">
+        <li><strong>alg</strong> — hardcode expected algorithm server-side; never trust client header</li>
+        <li><strong>none algorithm</strong> — must be rejected; strip-signature attack</li>
+        <li><strong>exp</strong> — always validate expiry; missing check enables replay attacks</li>
+        <li><strong>aud</strong> — verify audience; a token for Service A shouldn't work on Service B</li>
+        <li><strong>iss</strong> — verify issuer; prevents cross-tenant token replay</li>
+        <li><strong>Payload is not encrypted</strong> — base64url only; never store PII without JWE</li>
+      </ul>
+
+      <div class="mini-header" style="margin-top:16px;">OAuth 2.0 Flow Guide</div>
+      <div class="card-grid" style="margin-bottom:0;">
+        <div class="card card-green">
+          <div class="card-title">Auth Code + PKCE</div>
+          <p>Gold standard for user-facing apps. Back-channel token exchange. Defeats code interception.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Client Credentials</div>
+          <p>Machine-to-machine only. No user session. Service authenticates with its own ID + secret.</p>
+        </div>
+      </div>
+      <p style="font-size:11px; color:var(--accent); margin-top:8px;">⚠ Implicit Flow and ROPC are deprecated — both expose credentials or tokens directly.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 4: OWASP TOP 10 -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2 class="section-title">OWASP Top 10 — Core Vulnerabilities</h2>
+    <span class="section-tag">Threats</span>
+  </div>
+
+  <div class="risk-table">
+    <table style="width:100%; border-collapse:collapse;">
+      <tr>
+        <th style="padding:10px 14px; background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-align:left; width:32%;">Vulnerability</th>
+        <th style="padding:10px 14px; background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-align:left;">What It Is</th>
+        <th style="padding:10px 14px; background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-align:left; width:30%;">Key Defense</th>
+      </tr>
+      <tr><td style="padding:10px 14px; border-bottom:1px solid var(--rule); font-weight:600;">SQL / NoSQL Injection</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Malicious SQL/JSON operators in input manipulate query logic</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Parameterized queries; never raw string concat</td></tr>
+      <tr><td style="padding:10px 14px; border-bottom:1px solid var(--rule); font-weight:600;">Broken Access Control</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Users access data/actions beyond their permission level</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Deny-by-default; verify ownership on every request</td></tr>
+      <tr><td style="padding:10px 14px; border-bottom:1px solid var(--rule); font-weight:600;">XSS (Stored / Reflected / DOM)</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Malicious scripts execute in victim's browser</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Context-aware output encoding; CSP; HttpOnly cookies</td></tr>
+      <tr><td style="padding:10px 14px; border-bottom:1px solid var(--rule); font-weight:600;">SSRF</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">App fetches attacker-controlled URL; exposes internal services + cloud IMDS credentials</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Strict allowlist of permitted destinations; IMDSv2</td></tr>
+      <tr><td style="padding:10px 14px; border-bottom:1px solid var(--rule); font-weight:600;">Insecure Deserialization</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Tampered serialized objects enable privilege escalation or RCE via gadget chains</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Never deserialize untrusted data; integrity checks</td></tr>
+      <tr><td style="padding:10px 14px; border-bottom:1px solid var(--rule); font-weight:600;">XXE Injection</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">XML parser resolves external entities; exposes files or enables SSRF</td><td style="padding:10px 14px; border-bottom:1px solid var(--rule);">Disable DTD/external entity processing entirely</td></tr>
+      <tr><td style="padding:10px 14px; font-weight:600;">Security Misconfiguration</td><td style="padding:10px 14px;">Default credentials, debug mode in prod, verbose errors, public S3 buckets</td><td style="padding:10px 14px;">Harden defaults; disable debug; generic error responses</td></tr>
+    </table>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">Command Injection</div>
+    <p>Using <code>;</code> or <code>&</code> separators in unvalidated input can chain OS commands on the host server. Leads to full server compromise, webshells, and lateral movement.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 5: API RISKS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2 class="section-title">OWASP API Security Top 10</h2>
+    <span class="section-tag">API-Specific</span>
+  </div>
+
+  <ol class="owasp-list">
+    <div class="owasp-item">
+      <div class="owasp-num">01</div>
+      <div><div class="owasp-name">BOLA / IDOR — Broken Object Level Authorization</div><div class="owasp-desc">Changing <code>/orders/1001</code> → <code>/orders/1002</code> accesses another user's data. Most critical API flaw — logic error, not code error. Every resource request must verify ownership.</div></div>
+      <span class="badge badge-crit">Critical</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">02</div>
+      <div><div class="owasp-name">Broken Authentication</div><div class="owasp-desc">Weak credential handling, no rate limiting, JWT "none" algorithm, missing expiry validation.</div></div>
+      <span class="badge badge-crit">Critical</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">03</div>
+      <div><div class="owasp-name">BOPLA — Broken Object Property Level Auth</div><div class="owasp-desc">Combines Mass Assignment (injecting <code>is_admin:true</code>) and Excessive Data Exposure (API returns full object; client filters). Never trust client-supplied fields blindly.</div></div>
+      <span class="badge badge-crit">Critical</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">04</div>
+      <div><div class="owasp-name">Unrestricted Resource Consumption</div><div class="owasp-desc">No rate limits → credential stuffing, scraping, DoS. In cloud: "Denial of Wallet" — auto-scaling runs up massive bills.</div></div>
+      <span class="badge badge-high">High</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">05</div>
+      <div><div class="owasp-name">BFLA — Broken Function Level Authorization</div><div class="owasp-desc">Standard user accesses admin endpoints via forced browsing or HTTP method switching (GET → DELETE). Role must be checked at every function, not just login.</div></div>
+      <span class="badge badge-high">High</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">06</div>
+      <div><div class="owasp-name">Unrestricted Access to Sensitive Business Flows</div><div class="owasp-desc">Scalper bots, coupon abuse, fake accounts — technically valid requests that violate business intent.</div></div>
+      <span class="badge badge-high">High</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">07</div>
+      <div><div class="owasp-name">Server-Side Request Forgery (SSRF)</div><div class="owasp-desc">API fetches attacker URL → hits internal services or cloud metadata at <code>169.254.169.254</code> to steal IAM credentials. Capital One breach vector.</div></div>
+      <span class="badge badge-high">High</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">08</div>
+      <div><div class="owasp-name">Security Misconfiguration</div><div class="owasp-desc">GraphQL introspection left on, CORS wildcard with credentials, verbose stack traces, default API keys.</div></div>
+      <span class="badge badge-med">Medium</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">09</div>
+      <div><div class="owasp-name">Improper Inventory Management</div><div class="owasp-desc"><strong>Shadow APIs</strong> (undocumented) and <strong>Zombie APIs</strong> (deprecated but still live) — unpatched, unmonitored backdoors.</div></div>
+      <span class="badge badge-med">Medium</span>
+    </div>
+    <div class="owasp-item">
+      <div class="owasp-num">10</div>
+      <div><div class="owasp-name">Unsafe Consumption of APIs</div><div class="owasp-desc">Implicitly trusting third-party API data. A compromised partner can inject SQLi or XSS into your backend via a "trusted" channel.</div></div>
+      <span class="badge badge-med">Medium</span>
+    </div>
+  </ol>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 6: CLOUD -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2 class="section-title">Cloud &amp; Infrastructure Security</h2>
+    <span class="section-tag">Cloud</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="mini-header">Shared Responsibility Model</div>
+      <div class="risk-table">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <tr style="background:var(--ink); color:var(--paper);">
+            <th style="padding:8px 10px; font-family:var(--mono); font-size:9px;">Model</th>
+            <th style="padding:8px 10px; font-family:var(--mono); font-size:9px;">Provider Owns</th>
+            <th style="padding:8px 10px; font-family:var(--mono); font-size:9px;">You Own</th>
+          </tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--rule); font-weight:600;">IaaS</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">Hardware, hypervisor</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">OS, patches, network, app, data</td></tr>
+          <tr><td style="padding:8px 10px; border-bottom:1px solid var(--rule); font-weight:600;">PaaS</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">OS, runtime, middleware</td><td style="padding:8px 10px; border-bottom:1px solid var(--rule);">Code, config, data</td></tr>
+          <tr><td style="padding:8px 10px; font-weight:600;">SaaS</td><td style="padding:8px 10px;">Entire stack</td><td style="padding:8px 10px;">IAM, config, data governance</td></tr>
+        </table>
+      </div>
+      <p style="font-size:11.5px; color:var(--accent); margin-top:8px;">You can outsource management. You cannot outsource legal liability.</p>
+    </div>
+    <div>
+      <div class="mini-header">Container &amp; K8s Security</div>
+      <ul class="checklist">
+        <li><strong>Scan images</strong> with Trivy/Clair before pushing to registry</li>
+        <li><strong>Run as non-root</strong> — limits container breakout blast radius</li>
+        <li><strong>RBAC</strong> — a web server pod shouldn't list cluster secrets</li>
+        <li><strong>mTLS via service mesh</strong> (Istio/Linkerd) for East-West traffic</li>
+        <li><strong>Secure the API server</strong> — 2018 Tesla breach was an exposed dashboard</li>
+        <li><strong>Runtime protection</strong> with Falco/eBPF for anomaly detection</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top:16px;">
+    <div class="callout-label">Zero Trust Mandate</div>
+    <p>The "castle-and-moat" model is dead. Every service-to-service call must be authenticated. Internal network location grants no trust. Use mTLS + token-based service authorization everywhere.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 7: SECURE DESIGN -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2 class="section-title">Secure API Design Principles</h2>
+    <span class="section-tag">Design</span>
+  </div>
+
+  <div class="three-col">
+    <div class="card card-green">
+      <div class="card-title">Least Privilege</div>
+      <p>Tokens scoped to minimum. Read-only apps get read-only tokens. Backend services don't forward over-privileged tokens. Whitelist updatable fields.</p>
+    </div>
+    <div class="card card-green">
+      <div class="card-title">Deny by Default</div>
+      <p>All access denied unless explicitly granted. If a config fails, result is locked state. Never "fail open."</p>
+    </div>
+    <div class="card card-green">
+      <div class="card-title">Filter at Backend</div>
+      <p>Never rely on UI to hide sensitive fields. API returns only what the client legitimately needs. Treat all client input as untrusted.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Generic Errors</div>
+      <p>Return <code>400</code>/<code>500</code> to client. Log details internally. Consistent response size/time to prevent side-channel attacks.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Idempotency &amp; Anti-Replay</div>
+      <p>Use nonces or ETags to prevent replayed requests. ETags reject updates if resource changed since last fetch (412 Precondition Failed).</p>
+    </div>
+    <div class="card">
+      <div class="card-title">API Lifecycle</div>
+      <p>Maintain an API catalog. Use <code>Sunset</code>/<code>Deprecation</code> headers. Retire zombie APIs via gateway automation before they become backdoors.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 8: CLIENT-SIDE -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2 class="section-title">Client-Side Security</h2>
+    <span class="section-tag">Browser</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="mini-header">Token Storage Trade-offs</div>
+      <div class="card card-accent" style="margin-bottom:10px;">
+        <div class="card-title">LocalStorage</div>
+        <p>Accessible via JS → XSS can exfiltrate tokens silently. Avoid for sensitive tokens.</p>
+      </div>
+      <div class="card card-blue" style="margin-bottom:10px;">
+        <div class="card-title">HttpOnly Cookie</div>
+        <p>JS can't read it → XSS-safe. But browser auto-sends it → CSRF risk. Mitigate with SameSite + CSRF tokens.</p>
+      </div>
+      <div class="card card-green">
+        <div class="card-title">BFF Pattern (Best)</div>
+        <p>Token management stays server-side. Browser gets encrypted HttpOnly+SameSite cookies. Credentials never touch the browser directly.</p>
+      </div>
+    </div>
+    <div>
+      <div class="mini-header">Security Headers Checklist</div>
+      <ul class="checklist">
+        <li><strong>HSTS</strong> — force HTTPS; prevent SSL stripping</li>
+        <li><strong>CSP</strong> — restrict script sources; block inline + eval; use frame-ancestors</li>
+        <li><strong>X-Content-Type-Options: nosniff</strong> — prevent MIME sniffing XSS</li>
+        <li><strong>Referrer-Policy</strong> — prevent token leakage in Referer header</li>
+        <li><strong>SRI on third-party scripts</strong> — hash verification prevents CDN-compromise attacks</li>
+      </ul>
+      <div class="callout" style="margin-top:12px;">
+        <div class="callout-label">Clickjacking</div>
+        <p>Invisible iframes redirect user clicks to perform actions on a target site. Use <code>frame-ancestors 'none'</code> in CSP (supersedes X-Frame-Options).</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 9: SECRETS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2 class="section-title">Secrets Management</h2>
+    <span class="section-tag">Credentials</span>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">The Golden Rule</div>
+    <p>A leaked API key in a cloud environment = username + password + MFA bypass. Static, long-lived credentials are the root cause of most high-profile breaches. Favor short-lived credentials (STS tokens) over static IAM keys.</p>
+  </div>
+
+  <div class="two-col" style="margin-top:16px;">
+    <div>
+      <div class="mini-header">Where Secrets Leak</div>
+      <ul class="checklist">
+        <li><strong>Hardcoded in source code</strong> — visible to all repo access; permanent in git history</li>
+        <li><strong>Config/backup files</strong> — <code>.env</code>, <code>wp-config.php</code>, <code>.bak</code> files in web root</li>
+        <li><strong>Client-side code</strong> — JS bundles and mobile APKs are decompilable</li>
+        <li><strong>Verbose logs</strong> — Authorization headers, tokens written to debug logs</li>
+        <li><strong>Environment variables</strong> — exposed via <code>/proc</code> or command injection</li>
+      </ul>
+    </div>
+    <div>
+      <div class="mini-header">Managed Secret Stores</div>
+      <div class="card card-green">
+        <div class="card-title">AWS Secrets Manager / HashiCorp Vault</div>
+        <p>Centralized encrypted store. Apps retrieve secrets at runtime via API — never touch disk. Full audit trail. Automated rotation limits blast radius of any leak.</p>
+      </div>
+      <div class="mini-header" style="margin-top:14px;">Revocation in Distributed Systems</div>
+      <p style="font-size:13px; color:var(--muted);">JWTs remain valid until expiry even after password changes. Use short-lived tokens (5–15 min) + blocklists for compromised token IDs.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 10: LOGGING -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2 class="section-title">Logging, Monitoring &amp; Detection</h2>
+    <span class="section-tag">Detection</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="mini-header">What to Log (The Five Ws)</div>
+      <ul class="checklist">
+        <li><strong>Who</strong> — authenticated user ID, session ID</li>
+        <li><strong>What</strong> — action taken, resource accessed (CRUD on sensitive data)</li>
+        <li><strong>Where</strong> — source IP, User-Agent</li>
+        <li><strong>When</strong> — precise timestamp (UTC)</li>
+        <li><strong>Result</strong> — success/failure, HTTP status code</li>
+        <li><strong>Never log</strong> — passwords, tokens, credit card numbers (PII minimization)</li>
+      </ul>
+    </div>
+    <div>
+      <div class="mini-header">Detection Signals</div>
+      <div class="tag-row">
+        <span class="tag active">404 burst = recon</span>
+        <span class="tag active">High 403s = privilege probe</span>
+        <span class="tag">Impossible travel</span>
+        <span class="tag">sqlmap User-Agent</span>
+        <span class="tag">Consistent request timing = bot</span>
+        <span class="tag">SYN scans</span>
+        <span class="tag">Beaconing pattern</span>
+        <span class="tag">New device + geo</span>
+      </div>
+      <div class="callout info" style="margin-top:8px;">
+        <div class="callout-label">Dwell Time Reality</div>
+        <p>Attackers average 200+ days in networks before detection. Most organizations are notified by third parties (FBI, fraud processors), not their own monitoring. Centralize logs in a SIEM — avoid "data graves."</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 11: DEVSECOPS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2 class="section-title">DevSecOps &amp; Secure SDLC</h2>
+    <span class="section-tag">Process</span>
+  </div>
+
+  <div class="mini-header">Shift-Left: Cost of Fixing Vulnerabilities</div>
+  <div class="flow" style="margin-bottom:20px;">
+    <div class="flow-step" style="background:var(--green);">Design Phase<br><span style="font-size:9px;">~$25</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background:#1a6b3c; opacity:0.8;">Coding<br><span style="font-size:9px;">~$100</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="background:#b7770d;">Testing<br><span style="font-size:9px;">~$1,500</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step danger">Post-Release<br><span style="font-size:9px;">~$16,000</span></div>
+  </div>
+
+  <div class="three-col">
+    <div class="card">
+      <div class="card-title">SAST</div>
+      <p>Scans source code without running it. Catches injection flaws early, points to exact line. High false-positive rate; misses runtime issues.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">DAST</div>
+      <p>Black-box testing against running app. Finds runtime issues (insecure cookies, auth flows). Late in lifecycle; can't pinpoint code location.</p>
+    </div>
+    <div class="card card-green">
+      <div class="card-title">IAST</div>
+      <p>Agent embedded in runtime. Gets code visibility of SAST + runtime context of DAST. Much lower false-positive rate.</p>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:16px;">
+    <div>
+      <div class="mini-header">Threat Modeling (STRIDE)</div>
+      <div class="risk-table">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <tr><td style="padding:7px 10px; border-bottom:1px solid var(--rule);"><strong>S</strong>poofing</td><td style="padding:7px 10px; border-bottom:1px solid var(--rule);">Identity impersonation</td></tr>
+          <tr><td style="padding:7px 10px; border-bottom:1px solid var(--rule);"><strong>T</strong>ampering</td><td style="padding:7px 10px; border-bottom:1px solid var(--rule);">Data modification</td></tr>
+          <tr><td style="padding:7px 10px; border-bottom:1px solid var(--rule);"><strong>R</strong>epudiation</td><td style="padding:7px 10px; border-bottom:1px solid var(--rule);">Denying actions</td></tr>
+          <tr><td style="padding:7px 10px; border-bottom:1px solid var(--rule);"><strong>I</strong>nformation Disclosure</td><td style="padding:7px 10px; border-bottom:1px solid var(--rule);">Data leaks</td></tr>
+          <tr><td style="padding:7px 10px; border-bottom:1px solid var(--rule);"><strong>D</strong>enial of Service</td><td style="padding:7px 10px; border-bottom:1px solid var(--rule);">System crashes</td></tr>
+          <tr><td style="padding:7px 10px;"><strong>E</strong>levation of Privilege</td><td style="padding:7px 10px;">Unauthorized admin access</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="mini-header">SCA &amp; Supply Chain</div>
+      <ul class="checklist">
+        <li>Modern apps are <strong>70–80% third-party code</strong> — you inherit their CVEs</li>
+        <li><strong>SCA tools</strong> cross-reference dependencies against NVD for known vulnerabilities</li>
+        <li><strong>SBOM</strong> — machine-readable "ingredients label"; lets you instantly check if you're affected by new CVEs (e.g. Log4j)</li>
+        <li><strong>Transitive dependencies</strong> are often invisible — the libraries your libraries use</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 12: GOVERNANCE -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <h2 class="section-title">Governance, Standards &amp; Compliance</h2>
+    <span class="section-tag">Governance</span>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">NIST SP 800-207 (Zero Trust)</div>
+      <p>Every request evaluated by a Policy Decision Point. Access never based on network location. "Never trust, always verify."</p>
+    </div>
+    <div class="card">
+      <div class="card-title">GDPR — Data Protection by Design</div>
+      <p>Privacy built into SDLC from day one. APIs must support data minimization and Right to Erasure across distributed systems.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">PCI DSS v4.0</div>
+      <p>Mandates MFA for privileged access. Requires pen testing specifically targeting business logic flaws — not just automated scanning.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">ISO 27001 / 27036</div>
+      <p>ISMS framework mandating least privilege (A.9) and network segregation (A.13). ISO 27036 specifically covers supplier/third-party API risk.</p>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top:20px;">
+    <div class="callout-label">The Operational Shift</div>
+    <p>Security teams must move from <strong>Gatekeepers</strong> (manual bottlenecks) to <strong>Guardrails</strong> (secure-by-default infrastructure). Treat security policies as code — version-controlled, automated, enforced at every CI/CD commit. The API Gateway is your central choke point for consistent enforcement across microservices.</p>
+  </div>
+
+  <div class="page-label" style="margin-top:32px;">API &amp; Application Security — Quick Start Guide · 2025</div>
+</div>
+
+</div><!-- /content -->
+</body>
+</html>

@@ -1,0 +1,3034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API & Application Security — Complete Study Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #0d0f14;
+  --bg2: #12151c;
+  --bg3: #181c26;
+  --surface: #1e2330;
+  --surface2: #252b3a;
+  --border: #2a3145;
+  --border2: #343d55;
+  --text: #e8e2d9;
+  --text2: #a89f93;
+  --text3: #6b6560;
+  --red: #e05252;
+  --red-dim: rgba(224,82,82,0.15);
+  --amber: #d4924a;
+  --amber-dim: rgba(212,146,74,0.15);
+  --teal: #4aa8a0;
+  --teal-dim: rgba(74,168,160,0.12);
+  --blue: #5b8dd9;
+  --blue-dim: rgba(91,141,217,0.12);
+  --green: #4aab6d;
+  --green-dim: rgba(74,171,109,0.12);
+  --purple: #8b6dd9;
+  --serif: 'Playfair Display', Georgia, serif;
+  --body: 'Source Serif 4', Georgia, serif;
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --sidebar-w: 280px;
+  --max-content: 860px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.75;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ─── SIDEBAR ─────────────────────────────────────── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.sidebar-brand {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-brand-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 6px;
+}
+
+.sidebar-brand h2 {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.sidebar-progress {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.progress-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--blue));
+  width: 0%;
+  transition: width 0.3s ease;
+  border-radius: 1px;
+}
+
+nav { padding: 12px 0 24px; flex: 1; }
+
+.nav-group-label {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 16px 24px 6px;
+}
+
+nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+  border-left: 2px solid transparent;
+  line-height: 1.3;
+}
+
+nav a:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+nav a.active {
+  color: var(--teal);
+  border-left-color: var(--teal);
+  background: var(--teal-dim);
+}
+
+nav a .nav-num {
+  color: var(--text3);
+  flex-shrink: 0;
+  font-size: 9px;
+}
+
+/* ─── MAIN CONTENT ────────────────────────────────── */
+#main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+}
+
+/* ─── COVER ───────────────────────────────────────── */
+#cover {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 80px 80px 100px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.cover-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.25;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+.cover-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(74,168,160,0.08) 0%, transparent 70%);
+  top: -100px; right: -100px;
+  pointer-events: none;
+}
+
+.cover-inner { position: relative; z-index: 1; max-width: 720px; }
+
+.cover-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cover-eyebrow::before {
+  content: '';
+  display: block;
+  width: 40px; height: 1px;
+  background: var(--teal);
+}
+
+.cover h1 {
+  font-family: var(--serif);
+  font-size: clamp(42px, 5vw, 72px);
+  font-weight: 900;
+  line-height: 1.0;
+  margin-bottom: 32px;
+  color: var(--text);
+}
+
+.cover h1 em {
+  font-style: italic;
+  color: var(--teal);
+}
+
+.cover-desc {
+  font-size: 17px;
+  color: var(--text2);
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+  font-weight: 300;
+}
+
+.cover-meta {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.cover-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cover-meta-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.cover-meta-value {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* ─── CHAPTERS ────────────────────────────────────── */
+.chapter {
+  max-width: var(--max-content);
+  margin: 0 auto;
+  padding: 80px 80px 80px 100px;
+  border-bottom: 1px solid var(--border);
+}
+
+.chapter-header {
+  margin-bottom: 56px;
+}
+
+.chapter-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.chapter-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.chapter-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
+.tag-red    { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(224,82,82,0.3); }
+.tag-amber  { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(212,146,74,0.3); }
+.tag-teal   { background: var(--teal-dim);  color: var(--teal);  border: 1px solid rgba(74,168,160,0.3); }
+.tag-blue   { background: var(--blue-dim);  color: var(--blue);  border: 1px solid rgba(91,141,217,0.3); }
+.tag-green  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(74,171,109,0.3); }
+.tag-purple { background: rgba(139,109,217,0.12); color: var(--purple); border: 1px solid rgba(139,109,217,0.3); }
+
+.chapter h2 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.chapter h2 em { font-style: italic; color: var(--teal); }
+
+.chapter-intro {
+  margin-top: 20px;
+  font-size: 17px;
+  color: var(--text2);
+  font-weight: 300;
+  max-width: 680px;
+  line-height: 1.7;
+  border-left: 3px solid var(--border2);
+  padding-left: 20px;
+}
+
+/* ─── SECTION WITHIN CHAPTER ─────────────────────── */
+.section {
+  margin-bottom: 56px;
+}
+
+.section h3 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section h4 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin: 24px 0 12px;
+}
+
+.section p {
+  color: var(--text2);
+  margin-bottom: 14px;
+  font-size: 15.5px;
+  line-height: 1.8;
+}
+
+.section p strong { color: var(--text); font-weight: 600; }
+
+/* ─── CARDS ───────────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.card-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+
+.card:hover { border-color: var(--border2); }
+
+.card-icon {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.card h5 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.card p {
+  font-size: 13.5px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.card-red    { border-left: 3px solid var(--red);   }
+.card-amber  { border-left: 3px solid var(--amber); }
+.card-teal   { border-left: 3px solid var(--teal);  }
+.card-blue   { border-left: 3px solid var(--blue);  }
+.card-green  { border-left: 3px solid var(--green); }
+.card-purple { border-left: 3px solid var(--purple);}
+
+/* ─── CALLOUTS ────────────────────────────────────── */
+.callout {
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin: 24px 0;
+  display: flex;
+  gap: 16px;
+}
+
+.callout-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.callout-body {}
+
+.callout-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.callout-body p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.callout-danger { background: var(--red-dim);   border: 1px solid rgba(224,82,82,0.25); }
+.callout-danger .callout-label { color: var(--red); }
+.callout-danger .callout-body p { color: #c9a8a8; }
+
+.callout-warn   { background: var(--amber-dim); border: 1px solid rgba(212,146,74,0.25); }
+.callout-warn .callout-label { color: var(--amber); }
+.callout-warn .callout-body p { color: #c4a882; }
+
+.callout-info   { background: var(--blue-dim);  border: 1px solid rgba(91,141,217,0.25); }
+.callout-info .callout-label { color: var(--blue); }
+.callout-info .callout-body p { color: #9aaed4; }
+
+.callout-tip    { background: var(--teal-dim);  border: 1px solid rgba(74,168,160,0.25); }
+.callout-tip .callout-label { color: var(--teal); }
+.callout-tip .callout-body p { color: #8ec5c2; }
+
+.callout-success { background: var(--green-dim); border: 1px solid rgba(74,171,109,0.25); }
+.callout-success .callout-label { color: var(--green); }
+.callout-success .callout-body p { color: #8ec4a4; }
+
+/* ─── TABLES ──────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  margin: 20px 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  background: var(--surface2);
+  padding: 12px 16px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  text-align: left;
+}
+
+tbody td {
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--text2);
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+tbody tr:hover td { background: var(--surface); }
+
+tbody td:first-child { color: var(--text); font-weight: 500; }
+
+/* ─── BADGES ──────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.badge-crit   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(224,82,82,0.3); }
+.badge-high   { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(212,146,74,0.3); }
+.badge-med    { background: var(--blue-dim);  color: var(--blue);  border: 1px solid rgba(91,141,217,0.3); }
+.badge-low    { background: var(--green-dim); color: var(--green); border: 1px solid rgba(74,171,109,0.3); }
+.badge-info   { background: var(--surface2);  color: var(--text2); border: 1px solid var(--border2); }
+
+/* ─── CODE ────────────────────────────────────────── */
+code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: var(--surface);
+  color: var(--amber);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+pre {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  overflow-x: auto;
+  margin: 20px 0;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+.code-comment { color: var(--text3); }
+.code-key { color: var(--blue); }
+.code-val { color: var(--green); }
+.code-danger { color: var(--red); }
+
+/* ─── FLOW DIAGRAMS ───────────────────────────────── */
+.flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 20px 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+}
+
+.flow-node {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 10px 16px;
+  border-radius: 4px;
+  white-space: nowrap;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.flow-node small {
+  display: block;
+  font-size: 9px;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+.node-default { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+.node-danger  { background: var(--red-dim);  color: var(--red);  border: 1px solid rgba(224,82,82,0.3); }
+.node-warn    { background: var(--amber-dim);color: var(--amber);border: 1px solid rgba(212,146,74,0.3); }
+.node-safe    { background: var(--green-dim);color: var(--green);border: 1px solid rgba(74,171,109,0.3); }
+.node-blue    { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(91,141,217,0.3); }
+.node-teal    { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(74,168,160,0.3); }
+
+.flow-arrow {
+  font-family: var(--mono);
+  color: var(--text3);
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+.flow-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: block;
+  width: 100%;
+}
+
+/* ─── LISTS ───────────────────────────────────────── */
+.styled-list {
+  list-style: none;
+  margin: 16px 0;
+}
+
+.styled-list li {
+  padding: 10px 0 10px 24px;
+  position: relative;
+  font-size: 15px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  line-height: 1.7;
+}
+
+.styled-list li:last-child { border-bottom: none; }
+
+.styled-list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+.styled-list li strong { color: var(--text); }
+
+.check-list {
+  list-style: none;
+  margin: 16px 0;
+}
+
+.check-list li {
+  padding: 8px 0 8px 28px;
+  position: relative;
+  font-size: 14.5px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+.check-list li:last-child { border-bottom: none; }
+
+.check-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 4px;
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.check-list li strong { color: var(--text); }
+
+/* ─── OWASP RANKED LIST ───────────────────────────── */
+.ranked-list { list-style: none; margin: 20px 0; }
+
+.ranked-item {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 16px;
+  align-items: start;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ranked-num {
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--border2);
+  line-height: 1;
+  padding-top: 2px;
+  font-style: italic;
+}
+
+.ranked-body {}
+
+.ranked-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.ranked-desc {
+  font-size: 13.5px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* ─── ATTACK/DEFENSE SPLIT ────────────────────────── */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.split-panel {
+  padding: 20px 24px;
+}
+
+.split-panel:first-child {
+  border-right: 1px solid var(--border);
+  background: rgba(224,82,82,0.04);
+}
+
+.split-panel:last-child {
+  background: rgba(74,171,109,0.04);
+}
+
+.split-header {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.split-header.attack { color: var(--red); }
+.split-header.defense { color: var(--green); }
+
+.split-panel ul {
+  list-style: none;
+}
+
+.split-panel ul li {
+  font-size: 13.5px;
+  color: var(--text2);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.split-panel ul li:last-child { border-bottom: none; }
+
+/* ─── HIGHLIGHT BOX ───────────────────────────────── */
+.highlight-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 24px 28px;
+  margin: 24px 0;
+  position: relative;
+}
+
+.highlight-box::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: var(--surface);
+  padding: 0 8px;
+  color: var(--teal);
+}
+
+.highlight-box p {
+  font-size: 15px;
+  color: var(--text2);
+  margin: 0;
+  line-height: 1.7;
+}
+
+.highlight-box p + p { margin-top: 10px; }
+
+/* ─── HORIZONTAL RULE ─────────────────────────────── */
+.hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* ─── PROGRESS BAR (STRENGTH) ─────────────────────── */
+.strength-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0;
+}
+
+.strength-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.strength-track {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.fill-10 { width: 10%; background: var(--red); }
+.fill-25 { width: 25%; background: var(--red); }
+.fill-50 { width: 50%; background: var(--amber); }
+.fill-75 { width: 75%; background: var(--blue); }
+.fill-90 { width: 90%; background: var(--green); }
+.fill-100 { width: 100%; background: var(--teal); }
+
+.strength-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  width: 80px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* ─── BACK TO TOP ─────────────────────────────────── */
+#back-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 10px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 50;
+}
+
+#back-top.visible { opacity: 1; }
+#back-top:hover { background: var(--surface); color: var(--teal); }
+
+/* ─── DIVIDER MARKER ──────────────────────────────── */
+.chapter-divider {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 0 auto 0;
+  max-width: var(--max-content);
+  padding: 0 100px;
+}
+
+/* ─── SCROLLBAR ───────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ─── ANIMATIONS ──────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cover-inner > * {
+  animation: fadeUp 0.6s ease both;
+}
+
+.cover-inner > *:nth-child(1) { animation-delay: 0.1s; }
+.cover-inner > *:nth-child(2) { animation-delay: 0.2s; }
+.cover-inner > *:nth-child(3) { animation-delay: 0.3s; }
+.cover-inner > *:nth-child(4) { animation-delay: 0.4s; }
+.cover-inner > *:nth-child(5) { animation-delay: 0.5s; }
+
+/* small utility */
+.mt-sm { margin-top: 12px; }
+.mt-md { margin-top: 24px; }
+.mono-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-eyebrow">Study Guide</div>
+    <h2>API &amp; Application Security</h2>
+  </div>
+  <div class="sidebar-progress">
+    <div class="progress-label">Reading progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </div>
+  <nav id="nav">
+    <div class="nav-group-label">Introduction</div>
+    <a href="#cover"><span class="nav-num">00</span> Overview</a>
+
+    <div class="nav-group-label">Architecture</div>
+    <a href="#ch1"><span class="nav-num">01</span> App Architecture &amp; Threat Surface</a>
+    <a href="#ch2"><span class="nav-num">02</span> HTTP Protocol Deep Dive</a>
+    <a href="#ch3"><span class="nav-num">03</span> Web Application Architecture</a>
+
+    <div class="nav-group-label">Identity</div>
+    <a href="#ch4"><span class="nav-num">04</span> Authentication Fundamentals</a>
+    <a href="#ch5"><span class="nav-num">05</span> OAuth 2.0, OIDC &amp; JWTs</a>
+    <a href="#ch6"><span class="nav-num">06</span> Authorization Models &amp; Access Control</a>
+
+    <div class="nav-group-label">Vulnerabilities</div>
+    <a href="#ch7"><span class="nav-num">07</span> Injection Attacks</a>
+    <a href="#ch8"><span class="nav-num">08</span> XSS, CSRF &amp; Client-Side Attacks</a>
+    <a href="#ch9"><span class="nav-num">09</span> SSRF, XXE &amp; Deserialization</a>
+    <a href="#ch10"><span class="nav-num">10</span> OWASP API Security Top 10</a>
+
+    <div class="nav-group-label">Infrastructure</div>
+    <a href="#ch11"><span class="nav-num">11</span> Cloud &amp; Shared Responsibility</a>
+    <a href="#ch12"><span class="nav-num">12</span> Containers, K8s &amp; Serverless</a>
+
+    <div class="nav-group-label">Defence</div>
+    <a href="#ch13"><span class="nav-num">13</span> Secure API Design Principles</a>
+    <a href="#ch14"><span class="nav-num">14</span> Client-Side Security</a>
+    <a href="#ch15"><span class="nav-num">15</span> Secrets Management</a>
+    <a href="#ch16"><span class="nav-num">16</span> Logging, Monitoring &amp; Detection</a>
+    <a href="#ch17"><span class="nav-num">17</span> DevSecOps &amp; Secure SDLC</a>
+    <a href="#ch18"><span class="nav-num">18</span> Runtime Protection</a>
+
+    <div class="nav-group-label">Context</div>
+    <a href="#ch19"><span class="nav-num">19</span> Third-Party &amp; Supply Chain APIs</a>
+    <a href="#ch20"><span class="nav-num">20</span> API Testing &amp; Assessment</a>
+    <a href="#ch21"><span class="nav-num">21</span> Breach Case Studies</a>
+    <a href="#ch22"><span class="nav-num">22</span> Governance &amp; Compliance</a>
+  </nav>
+</aside>
+
+<!-- ══════════════════ MAIN ══════════════════ -->
+<main id="main">
+
+<!-- COVER -->
+<section id="cover">
+  <div class="cover-grid"></div>
+  <div class="cover-glow"></div>
+  <div class="cover-inner">
+    <div class="cover-eyebrow">Complete Study Guide · 2025 Edition</div>
+    <h1>API &amp; Application<br><em>Security</em></h1>
+    <p class="cover-desc">A comprehensive walkthrough of modern application security — from architectural foundations and HTTP internals through authentication, OWASP vulnerabilities, cloud infrastructure, and operational defence. Designed for engineers, architects, and security practitioners.</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Chapters</span>
+        <span class="cover-meta-value">22</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Topics</span>
+        <span class="cover-meta-value">200+</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Format</span>
+        <span class="cover-meta-value">Long-Form</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Level</span>
+        <span class="cover-meta-value">Intermediate–Advanced</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 1 ══════ -->
+<section class="chapter" id="ch1">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 01</span>
+      <span class="chapter-tag tag-teal">Foundations</span>
+    </div>
+    <h2>Application Architecture &amp;<br><em>Threat Surface</em></h2>
+    <p class="chapter-intro">Before we can secure a system, we must understand its shape. The architecture of an application determines how data flows, where trust boundaries exist, and crucially — where attackers will focus their energy.</p>
+  </div>
+
+  <div class="section">
+    <h3>Architecture Patterns</h3>
+    <p>Modern applications are built on a spectrum of architectural patterns, each carrying its own security profile. Understanding these patterns is not academic exercise — it directly determines which attacks are possible and which defences are appropriate.</p>
+
+    <div class="card-grid">
+      <div class="card card-blue">
+        <div class="card-icon">🏛️</div>
+        <h5>Monolithic Architecture</h5>
+        <p>The traditional three-tier model — Presentation, Application, Persistence — deployed as a single unit. Security controls are centralised, which simplifies some aspects of defence. However, this creates an "all eggs in one basket" risk: a compromise of the application tier can directly expose database credentials. Patch cycles are slow because the entire application must be rebuilt and redeployed for any single change.</p>
+      </div>
+      <div class="card card-teal">
+        <div class="card-icon">🔬</div>
+        <h5>Microservices Architecture</h5>
+        <p>Decomposes applications into small, independent services organised around business capabilities. Each service runs its own process and communicates via lightweight APIs (REST or gRPC). The attack surface becomes dramatically larger — with numerous connection points each requiring authentication and authorisation. The upside is micro-segmentation: a compromised service has a more limited blast radius.</p>
+      </div>
+      <div class="card card-amber">
+        <div class="card-icon">⚡</div>
+        <h5>Serverless (FaaS)</h5>
+        <p>Event-driven execution where cloud providers manage the underlying infrastructure. Code runs only when triggered by events. The ephemeral container model reduces malware persistence — attackers cannot easily maintain a foothold. The risk profile shifts toward over-permissioned IAM roles and "Denial of Wallet" attacks, where excessive function invocations generate catastrophic cloud bills.</p>
+      </div>
+      <div class="card card-purple">
+        <div class="card-icon">☁️</div>
+        <h5>SaaS &amp; Hybrid</h5>
+        <p>SaaS shifts almost all infrastructure responsibility to the provider — but customers remain responsible for identity management, data governance, and configuration. Hybrid architectures combining on-premises and cloud services introduce the hardest problem: maintaining consistent security policies across environments, with gaps at transition points being prime exploitation targets.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>The API Security Gap</h3>
+    <p>Traditional security tooling was designed for a world of server-rendered web pages. APIs represent a fundamentally different problem that existing tools handle poorly.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-label">Critical Gap</div>
+        <p>Traditional tools like SAST and DAST lack the context to test API-specific logic. SAST may catch generic code flaws but will miss issues like Broken Object Level Authorization (BOLA) — where the code is syntactically correct but logically wrong. DAST tests running applications but cannot fully interpret API request/response semantics, leading to systematic false negatives on the most dangerous API vulnerabilities.</p>
+      </div>
+    </div>
+
+    <h4>Why Network Perimeters Fail APIs</h4>
+    <p>Network firewalls inspect IP addresses and ports — they have zero visibility into <strong>application logic</strong>. A firewall cannot distinguish between a legitimate customer fetching their own order data and an attacker manipulating an order ID to access someone else's. Web Application Firewalls (WAFs) operate on a negative security model — they block known bad patterns — but are blind to API-specific logic and data contracts.</p>
+
+    <h4>The "Headless" API Problem</h4>
+    <p>APIs have no user interface. Where a web application might use a button that only appears for administrators, an API endpoint is equally accessible to any authenticated HTTP client. Attackers can interact directly with backend logic using raw HTTP tools like <code>curl</code>, Postman, or Burp Suite — bypassing every frontend restriction. Over-permissioned APIs give attackers broad access the moment a single identity is compromised.</p>
+  </div>
+
+  <div class="section">
+    <h3>Trust Boundaries</h3>
+    <p>A trust boundary is any point where data transitions from one zone of control or trust to another. These boundaries are where the majority of security controls must be applied — and where the majority of attacks succeed.</p>
+
+    <div class="flow">
+      <span class="flow-label">Modern Application Trust Boundary Flow</span>
+      <div class="flow-node node-danger">Browser<small>Untrusted</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-warn">CDN / WAF<small>Partial Trust</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-blue">API Gateway<small>AuthN / Rate Limit</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-default">Microservices<small>mTLS Required</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-teal">Database<small>Encrypted</small></div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card card-red">
+        <h5>Browser → Backend</h5>
+        <p>Under Zero Trust principles, treat the browser as fundamentally untrusted. Enforce Content Security Policy (CSP) and rigorous input validation. Any data arriving from the client — cookies, tokens, form fields — must be treated as potentially malicious.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Frontend → API</h5>
+        <p>SPAs and mobile apps use JWTs for authentication. Tokens must not be stored in localStorage (vulnerable to XSS). Use HTTP-only, Secure, SameSite cookies or in-memory storage to reduce theft vectors.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>Service-to-Service (East-West)</h5>
+        <p>Internal microservice traffic is often implicitly trusted — this is catastrophically wrong. Zero Trust mandates explicit authentication using Mutual TLS (mTLS). Apply service-level authorisation with token claims to enforce least-privilege and limit lateral movement after a breach.</p>
+      </div>
+      <div class="card card-teal">
+        <h5>Third-Party Integrations</h5>
+        <p>Blindly trusting third-party API data is a supply chain vulnerability. Any data arriving from an external partner must be treated as untrusted input — validated, filtered, and sanitised before processing or storage, regardless of how trusted the partner appears.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-label">The Overlapping Risk Reality</div>
+        <p>Modern breaches rarely exploit a single vulnerability in isolation. Attackers chain weaknesses: SSRF to steal cloud credentials, then BOLA to exfiltrate sensitive records at scale, then a webshell for persistence. Failure in one security domain provides a foothold to exploit deeper flaws. This is why defence-in-depth across all layers is non-negotiable.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 2 ══════ -->
+<section class="chapter" id="ch2">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 02</span>
+      <span class="chapter-tag tag-blue">Protocol</span>
+    </div>
+    <h2>HTTP Protocol<br><em>Deep Dive</em></h2>
+    <p class="chapter-intro">HTTP is the substrate of the web. Security practitioners must understand it deeply — not just how it works when things go right, but how attackers exploit its design characteristics and how visibility degrades across protocol versions.</p>
+  </div>
+
+  <div class="section">
+    <h3>HTTP Fundamentals &amp; Statelessness</h3>
+    <p>HTTP/1.1 treats each request as entirely independent — the server retains no memory of previous interactions. This statelessness is architecturally elegant but creates immediate security implications.</p>
+
+    <h4>How Applications Simulate State</h4>
+    <p>Because HTTP is stateless, every mechanism for "remembering" a user is a layer built on top — and each is a potential attack vector. Applications use cookies, session IDs, or tokens to link requests to a user identity. If an attacker can steal or forge any of these, they inherit the user's session without ever knowing their password.</p>
+
+    <div class="split">
+      <div class="split-panel">
+        <div class="split-header attack">Attack Perspective</div>
+        <ul>
+          <li><strong>Session Hijacking:</strong> Steal a valid session cookie to impersonate the user</li>
+          <li><strong>CSRF:</strong> Exploit automatic cookie attachment to forge authenticated requests</li>
+          <li><strong>Token Theft:</strong> Extract JWTs from XSS-vulnerable localStorage</li>
+          <li><strong>Cleartext Interception:</strong> Sniff credentials over HTTP (no TLS)</li>
+          <li><strong>Replay Attacks:</strong> Re-send captured valid requests to repeat actions</li>
+        </ul>
+      </div>
+      <div class="split-panel">
+        <div class="split-header defense">Defence Perspective</div>
+        <ul>
+          <li><strong>HttpOnly Flag:</strong> Blocks JavaScript from reading cookies — defeats XSS theft</li>
+          <li><strong>Secure Flag:</strong> Cookies only sent over HTTPS</li>
+          <li><strong>SameSite=Strict/Lax:</strong> Limits cross-site cookie transmission — defeats CSRF</li>
+          <li><strong>TLS Everywhere:</strong> Mandatory HTTPS prevents cleartext interception</li>
+          <li><strong>Short Token Lifetimes:</strong> Limits the window a stolen token remains useful</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>HTTP Methods as Attack Signals</h3>
+    <p>Standard end-users primarily interact with <code>GET</code> and <code>POST</code>. The presence of other HTTP methods — especially in unexpected contexts — is often a meaningful security signal.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Legitimate Use</th><th>Attacker Use</th><th>Risk Level</th></tr></thead>
+        <tbody>
+          <tr><td>GET</td><td>Read resources</td><td>Parameter manipulation, enumeration</td><td><span class="badge badge-med">Medium</span></td></tr>
+          <tr><td>POST</td><td>Create resources, forms</td><td>Injection payloads, mass assignment</td><td><span class="badge badge-high">High</span></td></tr>
+          <tr><td>PUT</td><td>Replace entire resource</td><td>Overwrite data, privilege escalation via mass assignment</td><td><span class="badge badge-high">High</span></td></tr>
+          <tr><td>DELETE</td><td>Remove resources</td><td>BFLA — deleting others' resources</td><td><span class="badge badge-high">High</span></td></tr>
+          <tr><td>PATCH</td><td>Partial resource update</td><td>Selective field manipulation</td><td><span class="badge badge-med">Medium</span></td></tr>
+          <tr><td>OPTIONS</td><td>CORS preflight</td><td>Server fingerprinting, discovering allowed methods</td><td><span class="badge badge-med">Medium</span></td></tr>
+          <tr><td>HEAD</td><td>Check resource existence</td><td>Stealth enumeration without body transfer</td><td><span class="badge badge-low">Low</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Status Codes as Reconnaissance Intel</h3>
+    <p>HTTP status codes leak information about backend behaviour. Security teams should monitor status code distributions — anomalous patterns often indicate active attacks in progress.</p>
+
+    <div class="card-grid card-grid-3">
+      <div class="card card-red">
+        <h5>404 Bursts</h5>
+        <p>A sudden spike in 404 Not Found responses usually indicates automated scanning or forced browsing — an attacker enumerating endpoints, files, or directories that don't appear in the UI.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>500 Spikes</h5>
+        <p>Internal Server Errors triggered by specific requests often reveal successful probing — for example, a malformed SQL query triggering a database error that confirms injection vulnerability exists.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>401 / 403 Patterns</h5>
+        <p>High volumes of 401 Unauthorised suggest credential stuffing or brute force. High volumes of 403 Forbidden from an authenticated session suggest privilege escalation attempts.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>HTTP Headers as Intelligence</h3>
+    <h4>Headers That Leak Information</h4>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Header</th><th>What It Reveals</th><th>Attacker Advantage</th></tr></thead>
+        <tbody>
+          <tr><td><code>Server</code></td><td>Web server software and version (e.g., <code>Apache/2.4.49</code>)</td><td>Target known CVEs for that exact version</td></tr>
+          <tr><td><code>X-Powered-By</code></td><td>Application framework (e.g., <code>ASP.NET</code>, <code>PHP/8.1</code>)</td><td>Tailor injection payloads to the runtime</td></tr>
+          <tr><td><code>X-Debug-Token</code></td><td>Debug mode is enabled in production</td><td>Access detailed stack traces and environment info</td></tr>
+          <tr><td><code>WWW-Authenticate</code></td><td>Authentication scheme in use</td><td>Understand the auth mechanism to attack it</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Headers Attackers Manipulate</h4>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Header</th><th>Normal Purpose</th><th>Attack Vector</th></tr></thead>
+        <tbody>
+          <tr><td><code>User-Agent</code></td><td>Identify client browser/app</td><td>Spoofed to mimic legitimate clients and bypass bot detection filters</td></tr>
+          <tr><td><code>X-Forwarded-For</code></td><td>Preserve real client IP through proxies</td><td>Spoofed to appear as trusted internal IP, bypass IP-based access controls</td></tr>
+          <tr><td><code>Host</code></td><td>Identify the target virtual host</td><td>Host header injection to poison caches or reset password links</td></tr>
+          <tr><td><code>Referer</code></td><td>Indicate referring page</td><td>Forged to bypass referer-based CSRF protections</td></tr>
+          <tr><td><code>Origin</code></td><td>CORS — identify request origin</td><td>Used in CORS misconfiguration exploitation</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">🎯</div>
+      <div class="callout-body">
+        <div class="callout-label">The Confused Deputy — X-Forwarded-For</div>
+        <p>When requests pass through a CDN or load balancer, the backend sees the proxy's IP, not the real client. Proxies insert <code>X-Forwarded-For</code> to preserve the original source. But this header is entirely attacker-controlled. If a WAF or backend implicitly trusts it to determine client identity — for rate limiting, geo-blocking, or access control — an attacker trivially spoofs it to appear as a trusted internal address and bypasses all IP-based controls.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Protocol Evolution &amp; Visibility Challenges</h3>
+    <p>Each major HTTP version has introduced performance improvements that simultaneously create security blind spots for traditional monitoring tools.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Version</th><th>Key Changes</th><th>Security Impact</th></tr></thead>
+        <tbody>
+          <tr><td><strong>HTTP/1.1</strong></td><td>Text-based, one request per connection</td><td>Human-readable; easy to inspect but cleartext without TLS</td></tr>
+          <tr><td><strong>HTTP/2</strong></td><td>Binary framing, HPACK header compression, multiplexing (multiple concurrent requests over one TCP connection)</td><td>Non-human-readable without tooling; multiplexing obscures flow analysis for legacy IDS/IPS; HPACK complicates header inspection</td></tr>
+          <tr><td><strong>HTTP/3</strong></td><td>Moves from TCP to UDP (QUIC protocol); TLS 1.3 mandatory and integrated into transport</td><td>Encrypts payloads, packet numbers, and handshake metadata; nearly all network-level monitoring is blind; many enterprise firewalls cannot inspect QUIC</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="highlight-box" data-label="DNS over HTTPS (DoH) — A Case Study">
+      <p>DoH illustrates these visibility challenges perfectly. DNS queries — traditionally cleartext on UDP port 53, fully visible to network monitoring tools — are now encapsulated inside encrypted HTTP/2 or HTTP/3 streams on port 443. To any network monitor, DoH traffic is indistinguishable from normal web traffic.</p>
+      <p>This means attackers can use DoH to bypass internal DNS security controls, resolve malicious domains without appearing in DNS logs, and establish command-and-control channels that blend into normal HTTPS traffic. Defenders can no longer rely on DNS visibility as an intelligence source without deploying endpoint-level DNS interception.</p>
+    </div>
+
+    <h4>Where Inspection Must Now Happen</h4>
+    <p>Given that TLS 1.3 with Perfect Forward Secrecy (PFS) prevents passive decryption even if the server's private key is later compromised, traditional network-based monitoring cannot decrypt traffic. Inspection must be performed at two types of authorised points:</p>
+    <ul class="styled-list">
+      <li><strong>Endpoint Detection (EDR):</strong> Inspect traffic at the host before encryption occurs. The application process can be monitored for anomalous outbound connections, suspicious process tree behaviour, or unexpected data writes.</li>
+      <li><strong>Authorised TLS Termination Points:</strong> Deploy WAFs, load balancers, or API gateways as intentional TLS termination proxies that decrypt, inspect, and re-encrypt traffic. This is the only scalable approach for protecting web-facing APIs.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>Tools for HTTP Traffic Analysis</h3>
+    <div class="card-grid">
+      <div class="card card-teal">
+        <h5>Burp Suite / OWASP ZAP</h5>
+        <p>Interception proxies that act as intentional Man-in-the-Middle points. Allow security testers to pause, modify, and replay HTTP/HTTPS requests. Essential for testing API logic, bypassing client-side restrictions, and understanding authentication flows. The primary tool for manual API security assessment.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>Wireshark / tcpdump</h5>
+        <p>Capture raw network traffic. Analysts perform stream reconstruction to reassemble fragmented TCP/IP packets into coherent conversations. Useful for protocol analysis and non-encrypted traffic, but increasingly limited as TLS 1.3 adoption grows.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 3 ══════ -->
+<section class="chapter" id="ch3">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 03</span>
+      <span class="chapter-tag tag-blue">Architecture</span>
+    </div>
+    <h2>Web Application Architecture<br>&amp; <em>Security Model</em></h2>
+    <p class="chapter-intro">The three-tier web application architecture remains the conceptual backbone of modern web security — even as implementations have evolved dramatically. Understanding what each tier owns, and where security controls must live, is foundational.</p>
+  </div>
+
+  <div class="section">
+    <h3>The Three-Tier Model</h3>
+    <div class="card-grid card-grid-3">
+      <div class="card card-blue">
+        <div class="card-icon">🖥️</div>
+        <h5>Presentation Tier</h5>
+        <p>Web servers (Nginx, Apache, IIS) or modern SPA frameworks (React, Vue, Angular) running in the browser. Collects user input and presents output. Historically a thin proxy; now increasingly intelligent with significant logic running client-side. Must be treated as untrusted territory.</p>
+      </div>
+      <div class="card card-teal">
+        <div class="card-icon">⚙️</div>
+        <h5>Application Tier</h5>
+        <p>Middleware and frameworks (Spring Boot, Django, Rails, Express). Executes business logic, enforces authorisation rules, validates inputs. The critical gatekeeper — the only tier permitted to communicate directly with the database. Must never be directly internet-accessible.</p>
+      </div>
+      <div class="card card-amber">
+        <div class="card-icon">🗄️</div>
+        <h5>Persistence Tier</h5>
+        <p>SQL databases (MySQL, PostgreSQL, Oracle), NoSQL stores (MongoDB, DynamoDB), or object storage (S3, Azure Blob). Increasingly managed by cloud providers — shifting the security responsibility model significantly toward configuration and access control rather than OS-level hardening.</p>
+      </div>
+    </div>
+
+    <h4>Security Implications of Tier Isolation</h4>
+    <p><strong>Tier isolation</strong> — physical or logical separation between tiers — enables granular network-layer access controls, firewalls, and IDS between each layer. Critically, it provides <strong>compromise containment</strong>: breaching the presentation tier doesn't automatically grant database access. An attacker must pivot through the application tier's authorisation logic to reach sensitive data.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-label">Collapsed Tiers — The Two-Tier Antipattern</div>
+        <p>Combining presentation and application layers — often done to reduce hosting costs — drastically increases risk. Compromising the web server simultaneously exposes application logic and database credentials. All three tiers can be breached in a single step. This pattern is extremely common in legacy PHP applications and misconfigured cloud deployments.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>The Evolution of SPAs and the Expanding Attack Surface</h3>
+    <p>Modern Single Page Applications (SPAs) built on React, Angular, or Vue have shifted the MVC pattern — traditionally a server-side responsibility — directly into the user's browser. The browser is now effectively an extension of the server application.</p>
+
+    <p>This has profound security implications. The <strong>entirety of the application's frontend source code</strong> is delivered to the untrusted client environment. Adversaries can scrutinise this code to identify:</p>
+    <ul class="styled-list">
+      <li><strong>Hidden API endpoints</strong> — internal or administrative endpoints referenced in JavaScript but not exposed in the UI</li>
+      <li><strong>Privilege-level logic</strong> — code that runs conditionally for administrators but is delivered to all users</li>
+      <li><strong>Business logic</strong> — workflow constraints enforced client-side that can be bypassed by making direct API calls</li>
+      <li><strong>Hard-coded values</strong> — API keys, environment identifiers, or internal service URLs accidentally bundled in production builds</li>
+    </ul>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚡</div>
+      <div class="callout-body">
+        <div class="callout-label">The Cardinal Rule of Modern Web Architecture</div>
+        <p>The frontend is strictly an API consumer. Users can intercept, modify, and replay any request using proxies like Burp Suite. All client-side security controls must be treated as UX-only — they provide zero security guarantees. The server must independently verify every request's authentication, authorisation, and data integrity, treating all incoming client data as untrusted and potentially malicious.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Same-Origin Policy &amp; CORS</h3>
+    <p>The Same-Origin Policy (SOP) is one of the most important security mechanisms in the browser. It prevents malicious scripts on one site from reading sensitive data from another.</p>
+
+    <h4>What Defines an "Origin"?</h4>
+    <p>An origin is a precise three-part tuple: <strong>Protocol + Host + Port</strong>. All three must match exactly for two resources to be considered the same origin. The following pairs are <em>different</em> origins despite sharing a domain:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>URL A</th><th>URL B</th><th>Same Origin?</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td><code>https://example.com</code></td><td><code>http://example.com</code></td><td><span class="badge badge-crit">No</span></td><td>Different protocol</td></tr>
+          <tr><td><code>https://example.com</code></td><td><code>https://api.example.com</code></td><td><span class="badge badge-crit">No</span></td><td>Different host (subdomain)</td></tr>
+          <tr><td><code>https://example.com</code></td><td><code>https://example.com:8080</code></td><td><span class="badge badge-crit">No</span></td><td>Different port</td></tr>
+          <tr><td><code>https://example.com/a</code></td><td><code>https://example.com/b</code></td><td><span class="badge badge-low">Yes</span></td><td>Only path differs — path is irrelevant</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>CORS — Controlled Relaxation of SOP</h4>
+    <p>Modern applications frequently need to fetch data across origins (e.g., a frontend on <code>app.company.com</code> calling an API on <code>api.company.com</code>). CORS allows servers to explicitly declare which origins may access their resources via HTTP headers.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-label">The Wildcard CORS Misconfiguration</div>
+        <p>Setting <code>Access-Control-Allow-Origin: *</code> permits any origin to read responses. This is particularly dangerous when combined with <code>Access-Control-Allow-Credentials: true</code> — though note that browsers actually block this specific combination per the CORS spec. The dangerous pattern is servers that dynamically reflect the incoming <code>Origin</code> header without validation, effectively creating a wildcard that does allow credentials. An attacker-controlled site can then make authenticated requests on behalf of the victim and read the response.</p>
+      </div>
+    </div>
+
+    <h4>Preflight Requests</h4>
+    <p>For "non-simple" requests (using methods like PUT or DELETE, or custom headers), browsers send an automatic <code>OPTIONS</code> preflight request first. The server must respond with appropriate <code>Access-Control-Allow-Methods</code> and <code>Access-Control-Allow-Headers</code> headers before the browser proceeds with the actual request. If the server doesn't grant permission, the browser blocks the transaction entirely — without the request ever reaching the backend handler.</p>
+  </div>
+
+  <div class="section">
+    <h3>TLS Architecture &amp; the Zero Trust Problem</h3>
+    <h4>Where TLS is Typically Terminated</h4>
+    <p>In most architectures, TLS is terminated at the load balancer or reverse proxy at the network perimeter. This centralises certificate management and offloads cryptographic processing from application servers. However, this creates a serious problem: <strong>East-West traffic</strong> (internal service-to-service communication) typically travels unencrypted across the internal network.</p>
+
+    <p>Traditional "castle-and-moat" security models considered this acceptable — the internal network was implicitly trusted. Zero Trust eliminates this assumption entirely. An attacker who breaches any internal service can now passively observe all internal API traffic, steal tokens, and move laterally without encountering any cryptographic barriers.</p>
+
+    <h4>Service Meshes as a Solution</h4>
+    <p>Service meshes like Istio or Linkerd solve East-West encryption by injecting <strong>sidecar proxies</strong> into every pod. These proxies transparently upgrade internal communications to Mutual TLS (mTLS) — where both client and server authenticate using PKI certificates before any data is exchanged. Neither the application code nor the developers need to implement this; it happens transparently at the infrastructure layer.</p>
+
+    <div class="card-grid">
+      <div class="card card-teal">
+        <h5>TLS 1.3 &amp; Perfect Forward Secrecy</h5>
+        <p>TLS 1.3 is mandatory for HTTP/3. PFS ensures that even if a server's long-term private key is later stolen, an attacker cannot decrypt previously captured sessions. Each session uses ephemeral key material that is discarded after the connection. This provides protection against retroactive decryption — critical for long-term confidentiality of sensitive API communications.</p>
+      </div>
+      <div class="card card-red">
+        <h5>Downgrade Attack Risk</h5>
+        <p>Supporting legacy protocols (SSLv3, TLS 1.0) makes systems vulnerable to downgrade attacks like POODLE and LOGJAM, where an adversary forces negotiation of weak export-grade encryption. Mandate TLS 1.2 minimum, prefer TLS 1.3, and use ECDHE cipher suites to ensure PFS. Disable all weaker suites at the server configuration level.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 4 ══════ -->
+<section class="chapter" id="ch4">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 04</span>
+      <span class="chapter-tag tag-amber">Identity</span>
+    </div>
+    <h2>Authentication<br><em>Fundamentals</em></h2>
+    <p class="chapter-intro">Authentication is the process of verifying identity claims. Getting it wrong means an attacker can become any user in your system. This chapter covers the mechanisms, their strengths, and the sophisticated modern attacks that bypass even "strong" authentication.</p>
+  </div>
+
+  <div class="section">
+    <h3>Identity, Authentication &amp; Authorization — Separating the Concepts</h3>
+    <p>These three concepts are frequently conflated in code and architecture, creating dangerous logic flaws. They must remain strictly separated:</p>
+
+    <div class="card-grid card-grid-3">
+      <div class="card card-blue">
+        <div class="card-icon">🪪</div>
+        <h5>Identity</h5>
+        <p>The unique representation of a subject — human, machine, or application — in a digital system. Defined by attributes in a directory (Active Directory, Entra ID). Identity answers "who are you claiming to be?" before any verification occurs.</p>
+      </div>
+      <div class="card card-amber">
+        <div class="card-icon">🔑</div>
+        <h5>Authentication (AuthN)</h5>
+        <p>Verifying the truth of an identity claim. "Are you who you say you are?" Accomplished through four factors: something you know, something you have, something you are, and something you do. Multiple factors provide higher assurance.</p>
+      </div>
+      <div class="card card-teal">
+        <div class="card-icon">🛡️</div>
+        <h5>Authorization (AuthZ)</h5>
+        <p>Decision logic that occurs only after successful AuthN. "What are you permitted to do?" Must follow least-privilege and deny-by-default. Successful authentication does NOT automatically imply any level of access.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">💥</div>
+      <div class="callout-body">
+        <div class="callout-label">The Coupling Trap</div>
+        <p>When the same mechanism handles both authentication and authorisation, a breach in one model inevitably leads to a breach in the other. Many BOLA vulnerabilities exist because developers check "is this user authenticated?" but never ask "does this authenticated user own this specific resource?" — conflating AuthN with AuthZ.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Authentication Mechanisms</h3>
+
+    <h4>Form-Based Authentication</h4>
+    <p>The most common mechanism — an HTML form submitting credentials via HTTP POST. Highly flexible, supports custom logic like MFA and CAPTCHA. <strong>Mandatory requirement: TLS must protect the form submission.</strong> POST requests transmit credentials in cleartext at the HTTP level; TLS is the only thing preventing interception.</p>
+
+    <h4>HTTP Basic Authentication</h4>
+    <p>A legacy built-in scheme where credentials are Base64-encoded and sent in the <code>Authorization</code> header. Critical misconception to avoid: Base64 is encoding, not encryption. It can be trivially decoded by any tool. Additionally, Basic Auth has no native logout mechanism — credentials remain cached in the browser until it is fully closed. Only acceptable when protected by TLS and even then should be replaced by modern alternatives.</p>
+
+    <h4>Session Management</h4>
+    <p>After authentication, the server assigns a cryptographically random Session ID with high entropy — designed to be computationally infeasible to guess. The server stores session data associated with this ID. The client includes the ID in subsequent requests, acting as a continuous re-authentication token. This approach requires server-side storage (database or cache) for session data, creating scaling considerations in distributed architectures.</p>
+  </div>
+
+  <div class="section">
+    <h3>MFA Mechanisms — Strength Analysis</h3>
+
+    <div class="strength-bar">
+      <span class="strength-label">SMS / Voice</span>
+      <div class="strength-track"><div class="strength-fill fill-10"></div></div>
+      <span class="strength-note">Deprecated</span>
+    </div>
+    <div class="strength-bar">
+      <span class="strength-label">Email OTP</span>
+      <div class="strength-track"><div class="strength-fill fill-25"></div></div>
+      <span class="strength-note">Weak</span>
+    </div>
+    <div class="strength-bar">
+      <span class="strength-label">Push Notify</span>
+      <div class="strength-track"><div class="strength-fill fill-50"></div></div>
+      <span class="strength-note">Moderate</span>
+    </div>
+    <div class="strength-bar">
+      <span class="strength-label">TOTP (App)</span>
+      <div class="strength-track"><div class="strength-fill fill-75"></div></div>
+      <span class="strength-note">Good</span>
+    </div>
+    <div class="strength-bar">
+      <span class="strength-label">FIDO2 / Passkey</span>
+      <div class="strength-track"><div class="strength-fill fill-100"></div></div>
+      <span class="strength-note">Strongest</span>
+    </div>
+
+    <h4>Why SMS MFA is Deprecated (NIST 2016)</h4>
+    <p>SMS-based OTP faces two classes of attack. <strong>SIM Swapping:</strong> an attacker socially engineers a mobile carrier into transferring the victim's phone number to an attacker-controlled SIM. All subsequent SMS messages, including OTP codes, go to the attacker. <strong>SS7 Interception:</strong> exploits fundamental vulnerabilities in the global telecommunications signalling protocol to intercept SMS messages in transit. These attacks are not theoretical — they have been used in high-profile financial fraud cases.</p>
+
+    <h4>TOTP Vulnerability: Real-Time Phishing (AiTM)</h4>
+    <p>TOTP codes change every 30–60 seconds but remain valid within that window. Adversary-in-the-Middle (AiTM) attacks use proxy tools like <strong>Evilginx</strong> to sit between the victim and the legitimate login page, acting as a real-time relay. The attacker captures the username, password, and current TOTP code — then immediately relays them to the real service. The victim successfully authenticates; the attacker receives a valid session cookie and replays it in their own browser. The entire attack happens faster than the TOTP window expires.</p>
+
+    <h4>MFA Fatigue (Prompt Bombing)</h4>
+    <p>Push notification MFA is vulnerable to a purely psychological attack. An attacker who has obtained valid credentials repeatedly triggers MFA push notifications — often dozens per hour, frequently late at night. The goal is to exhaust the victim's patience until they approve the request to silence the alerts. This technique was used in the 2022 Uber breach. Modern mitigations include number matching (displaying a code on the login screen that must be matched in the app) and geographic context.</p>
+
+    <h4>FIDO2 — The Un-phishable Standard</h4>
+    <p>FIDO2 and hardware tokens (YubiKeys) or platform authenticators (Passkeys on modern devices) use asymmetric cryptography. The hardware device is <strong>cryptographically bound to the specific domain</strong> during registration. When authenticating, the device signs a challenge from the server — but only if the domain in the browser matches the registered domain exactly. A perfectly cloned phishing site will have a different domain; the hardware key detects this and refuses to sign. AiTM attacks are technically defeated because the attacker's proxy domain will never match.</p>
+
+    <h4>Browser Pivoting — Post-Exploitation MFA Bypass</h4>
+    <p>Once an attacker has a foothold on a victim's machine via malware, they can use frameworks like Cobalt Strike to inject a proxy into the user's active browser process. The attacker routes their own web requests through the victim's browser, inheriting all existing authenticated sessions and cookies. Because the server sees requests originating from the already-authenticated browser, no new MFA challenge is triggered. This is why endpoint security and EDR are critical components of an MFA strategy — the cryptographic controls are sound, but the endpoint trust is assumed.</p>
+
+    <h4>Legacy Protocol MFA Bypass</h4>
+    <p>Protocols like IMAP, POP3, and SMTP were designed before MFA existed. They simply cannot challenge for a second factor during authentication. If these protocols are enabled on a mail server protected by MFA for the web portal, attackers use tools like <strong>MFASweep</strong> to identify endpoints where legacy authentication is still permitted — and authenticate directly, bypassing MFA entirely. The fix is to disable all legacy authentication protocols and enforce modern authentication universally.</p>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 5 ══════ -->
+<section class="chapter" id="ch5">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 05</span>
+      <span class="chapter-tag tag-amber">Identity</span>
+    </div>
+    <h2>OAuth 2.0, OIDC<br>&amp; <em>JSON Web Tokens</em></h2>
+    <p class="chapter-intro">Modern authentication at scale is built on delegated authorization frameworks. Understanding OAuth 2.0 and JWT deeply — including their vulnerabilities — is essential for any API security practitioner.</p>
+  </div>
+
+  <div class="section">
+    <h3>OAuth 2.0 — Delegated Authorization</h3>
+    <p>OAuth 2.0 solves the <strong>access delegation problem</strong>: allowing a third-party application to access a user's resources without the user sharing their credentials. The classic analogy is a valet key — it grants limited access (drive the car) without full access (the boot, the glove box).</p>
+    <p>OAuth issues a time-bound <strong>Access Token</strong> restricted to specific <strong>scopes</strong>. The application never sees the user's password. The user authenticates directly with the <strong>Authorization Server</strong> (Identity Provider), which issues tokens to the application.</p>
+
+    <h4>The OAuth 2.0 Flows</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Flow</th><th>Use Case</th><th>Security Status</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Authorization Code + PKCE</strong></td><td>All user-facing apps (web, mobile, SPA)</td><td><span class="badge badge-low">Gold Standard</span></td></tr>
+        <tr><td><strong>Client Credentials</strong></td><td>Machine-to-machine, no user present</td><td><span class="badge badge-low">Correct for M2M</span></td></tr>
+        <tr><td><strong>Implicit Flow</strong></td><td>Legacy SPAs</td><td><span class="badge badge-crit">Deprecated</span></td></tr>
+        <tr><td><strong>Resource Owner Password (ROPC)</strong></td><td>Legacy systems</td><td><span class="badge badge-crit">Deprecated</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Authorization Code Flow + PKCE — Why It's Gold Standard</h4>
+    <p>The flow separates the browser from final token acquisition via a multi-step back-channel exchange. A short-lived <strong>authorization code</strong> (valid ~60 seconds) is returned to the browser — not the token itself. This prevents token leakage through browser history, referrer headers, or server logs. The code can only be exchanged for tokens via a direct server-to-server call.</p>
+    <p><strong>PKCE</strong> (Proof Key for Code Exchange) prevents code interception attacks. At flow initiation, the client generates a random <code>code_verifier</code>, hashes it to create a <code>code_challenge</code>, and sends the challenge with the authorization request. When exchanging the code for tokens, the client must provide the original verifier. If an attacker intercepts the authorization code, they cannot exchange it without the verifier they never received.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-label">Why Implicit Flow is Deprecated</div>
+        <p>The Implicit Flow returned tokens directly in the URL fragment (e.g., <code>#access_token=eyJ...</code>). Tokens appear in browser history, server access logs, and the <code>Referer</code> header of subsequent requests. Any XSS vulnerability could exfiltrate the token from the URL. ROPC is deprecated because it requires users to give their password directly to the application — violating the core principle that users authenticate exclusively with the IdP, not individual apps.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>OpenID Connect (OIDC) — Identity on Top of OAuth</h3>
+    <p>OAuth 2.0 handles authorization ("what can you do?") but not authentication ("who are you?"). OIDC adds a standardised identity layer. The IdP issues an <strong>ID Token</strong> — a cryptographically signed JWT containing claims about the authenticated user: their unique identifier (<code>sub</code>), name, email, and the time of authentication. The application verifies this token using the IdP's public key.</p>
+    <p>OIDC is the foundation of modern Single Sign-On. Once a user authenticates with the IdP (Google, Microsoft, Okta), all OIDC-integrated applications trust that assertion without requiring re-authentication.</p>
+  </div>
+
+  <div class="section">
+    <h3>JSON Web Tokens — Structure &amp; Security</h3>
+    <p>JWTs are compact, self-contained tokens carrying identity and authorisation claims. They enable stateless authentication — APIs can validate requests without querying a central session store. A JWT has three Base64URL-encoded parts separated by periods: <code>header.payload.signature</code>.</p>
+    <pre><code><span class="code-comment">// Decoded JWT Header</span>
+{
+  <span class="code-key">"alg"</span>: <span class="code-val">"RS256"</span>,   <span class="code-comment">// Signing algorithm</span>
+  <span class="code-key">"typ"</span>: <span class="code-val">"JWT"</span>
+}
+
+<span class="code-comment">// Decoded JWT Payload (Claims)</span>
+{
+  <span class="code-key">"iss"</span>: <span class="code-val">"https://auth.example.com"</span>,  <span class="code-comment">// Issuer</span>
+  <span class="code-key">"sub"</span>: <span class="code-val">"user_7f3a9c"</span>,              <span class="code-comment">// Subject (user ID)</span>
+  <span class="code-key">"aud"</span>: <span class="code-val">"api.example.com"</span>,          <span class="code-comment">// Audience (intended recipient)</span>
+  <span class="code-key">"exp"</span>: <span class="code-val">1735689600</span>,               <span class="code-comment">// Expiration (Unix timestamp)</span>
+  <span class="code-key">"iat"</span>: <span class="code-val">1735686000</span>,               <span class="code-comment">// Issued At</span>
+  <span class="code-key">"scope"</span>: <span class="code-val">"read:orders write:profile"</span>
+}</code></pre>
+
+    <h4>Critical JWT Validation Checklist</h4>
+    <ul class="check-list">
+      <li><strong>Validate the signature</strong> — reject any token where signature verification fails</li>
+      <li><strong>Hardcode the expected algorithm</strong> — never trust the <code>alg</code> header from the client</li>
+      <li><strong>Reject the "none" algorithm</strong> — tokens with <code>alg: none</code> have no signature at all</li>
+      <li><strong>Check <code>exp</code></strong> — expired tokens must be rejected; missing check enables replay attacks</li>
+      <li><strong>Validate <code>aud</code></strong> — token for Service A must not work on Service B</li>
+      <li><strong>Validate <code>iss</code></strong> — token must come from the expected authorization server</li>
+      <li><strong>Never store PII in payload</strong> — the payload is only Base64URL encoded, not encrypted</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>JWT Attack Techniques</h3>
+    <div class="card-grid">
+      <div class="card card-red">
+        <h5>Algorithm Confusion Attack</h5>
+        <p>In RS256, the server signs with a private key and verifies with a public key. An attacker changes the header to <code>HS256</code> (symmetric) and uses the server's <strong>public key</strong> (which is public by definition) as the HMAC secret. Poorly implemented libraries that trust the client's <code>alg</code> header will verify the attacker's forged signature successfully. <strong>Fix: hardcode the expected algorithm server-side.</strong></p>
+      </div>
+      <div class="card card-red">
+        <h5>"None" Algorithm Vulnerability</h5>
+        <p>Some JWT libraries accept tokens where <code>alg</code> is set to <code>none</code>, meaning no signature verification occurs. An attacker decodes a legitimate JWT, modifies the payload (e.g., changes <code>role</code> to <code>admin</code>), sets <code>alg: none</code>, removes the signature section, and submits it. The library accepts it as valid. Some bypasses use case variants: <code>nOnE</code>, <code>NONE</code>.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Expired Token Replay</h5>
+        <p>If the server doesn't validate the <code>exp</code> claim, a stolen token remains valid indefinitely — even after a user changes their password. The window of opportunity for an attacker extends to infinity. Short token lifetimes (5–15 minutes for access tokens) are the primary mitigation.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Audience Confusion</h5>
+        <p>A token issued for a low-security internal "analytics" service can be replayed against a high-security "payments" service if both trust the same issuer and neither validates the <code>aud</code> claim. Strict audience validation is required on every service.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box" data-label="The Stateless Revocation Problem">
+      <p>The "Achilles' heel" of JWTs: unlike server-side sessions that can be deleted from a database immediately, a signed JWT remains cryptographically valid until its <code>exp</code> claim passes — even if the user changes their password, or the token is known to be compromised.</p>
+      <p>Workarounds include: <strong>token blocklists</strong> (store revoked JTI claims in Redis until they expire — requires a database lookup per request, partially defeating the stateless advantage); <strong>short-lived tokens</strong> (access tokens of 5–15 minutes paired with longer-lived refresh tokens); or <strong>token families</strong> (refresh token rotation with reuse detection).</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Symmetric vs Asymmetric Signing</h3>
+    <div class="split">
+      <div class="split-panel">
+        <div class="split-header attack">HS256 — Symmetric (HMAC)</div>
+        <ul>
+          <li>One secret key used for both signing and verification</li>
+          <li>Computationally fast and efficient</li>
+          <li>Secret must be shared with every service that verifies tokens</li>
+          <li>If any downstream service is compromised, the shared secret is exposed</li>
+          <li>Any service with the secret can also forge new tokens</li>
+          <li>Suitable only for single-service architectures</li>
+        </ul>
+      </div>
+      <div class="split-panel">
+        <div class="split-header defense">RS256 / ES256 — Asymmetric</div>
+        <ul>
+          <li>Private key (AuthN server only) for signing; public key for verification</li>
+          <li>Public key can be freely distributed via JWKS endpoint</li>
+          <li>Downstream services cannot forge tokens — they only have the public key</li>
+          <li>Compromise of one downstream service doesn't compromise the signing key</li>
+          <li>Performance cost: asymmetric operations are ~100x slower than HMAC</li>
+          <li>The correct choice for distributed microservices architecture</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 6 ══════ -->
+<section class="chapter" id="ch6">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 06</span>
+      <span class="chapter-tag tag-amber">Identity</span>
+    </div>
+    <h2>Authorization Models<br>&amp; <em>Access Control</em></h2>
+    <p class="chapter-intro">Authorization is the most exploited category of vulnerability in modern APIs. Understanding the models, their failure modes, and how to implement them correctly is critical for any security-conscious developer or architect.</p>
+  </div>
+
+  <div class="section">
+    <h3>Access Control Models</h3>
+    <div class="card-grid card-grid-3">
+      <div class="card card-blue">
+        <h5>RBAC — Role-Based</h5>
+        <p>Permissions assigned to static roles (Admin, Editor, Viewer). Users assigned to roles. Simple to manage; updating a role changes permissions for all users with that role. <strong>Weakness:</strong> static nature lacks granularity — leads to "role explosion" when fine-grained control is needed. Cannot express "user can only edit their own documents."</p>
+      </div>
+      <div class="card card-teal">
+        <h5>ABAC — Attribute-Based</h5>
+        <p>Access decisions made by evaluating rules against four attribute categories: subject (job title, clearance), resource (classification, owner), action (read/write), and environment (time of day, location). Extremely flexible and granular. <strong>Weakness:</strong> complex to implement; significant computational overhead; hard to audit.</p>
+      </div>
+      <div class="card card-purple">
+        <h5>ReBAC — Relationship-Based</h5>
+        <p>Models users and resources as nodes in a graph; access is determined by relationships (edges). If User A owns Folder X and Document Y is inside Folder X, User A inherits access through the relationship. Used by Google Zanzibar (powers Google Drive). Handles complex hierarchical ownership naturally.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>BOLA — Broken Object Level Authorization</h3>
+    <p><strong>BOLA</strong> (also called IDOR — Insecure Direct Object Reference) is consistently ranked #1 in the OWASP API Security Top 10. It occurs when an API verifies that a user is authenticated but fails to verify that the authenticated user <em>owns or is permitted to access the specific resource being requested</em>.</p>
+
+    <div class="flow">
+      <span class="flow-label">BOLA Attack Pattern</span>
+      <div class="flow-node node-danger">Attacker authenticates<small>Valid credentials</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-warn">GET /orders/<b>1001</b><small>Own order</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-danger">Manipulates ID<small>1001 → 1002</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-danger">GET /orders/<b>1002</b><small>Another user's data</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-danger">200 OK<small>Full data returned</small></div>
+    </div>
+
+    <h4>Root Cause: The "Authenticated = Authorized" Fallacy</h4>
+    <p>The fundamental logic error is that developers use Object-Relational Mappers (ORMs) that bind user-supplied input directly to database queries — a user provides an ID, the ORM fetches that ID — without an intervening ownership check. The developer assumes "if a user is authenticated, any ID they provide must be theirs." This assumption is catastrophically wrong.</p>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <div class="callout-label">Why UUIDs Are Not a Fix</div>
+        <p>Some developers attempt to mitigate BOLA by replacing sequential integer IDs with UUIDs, relying on obscurity to prevent enumeration. This fails because UUIDs can be leaked through other API responses (e.g., search results, notifications, or shared links), log files, or API documentation. A UUID-based BOLA vulnerability is harder to discover but equally exploitable. <strong>The only fix is authorization logic that verifies ownership — not ID format.</strong></p>
+      </div>
+    </div>
+
+    <h4>Correct Defence Pattern</h4>
+    <p>Every request to a resource must be authorised against the user's identity stored in the server-side session or verified JWT claims. The application must never trust an ID provided by the client without confirming that identity owns or is permitted to access that resource. Modern architectures use centralised authorization middleware or policy engines to enforce these checks consistently across all endpoints.</p>
+  </div>
+
+  <div class="section">
+    <h3>BFLA — Broken Function Level Authorization</h3>
+    <p>While BOLA is about accessing the wrong <em>data</em>, BFLA is about executing the wrong <em>functions</em>. A standard user gains the ability to invoke administrative endpoints — delete accounts, modify system settings, or promote themselves to admin. This is vertical privilege escalation.</p>
+
+    <div class="card-grid">
+      <div class="card card-red">
+        <h5>Forced Browsing</h5>
+        <p>Attackers use automated spidering or known admin path patterns to discover endpoints not linked in the UI: <code>/api/admin/users</code>, <code>/api/v1/debug</code>, <code>/api/internal/config</code>. The API handles these requests correctly — but any authenticated user who discovers them can invoke them if RBAC isn't enforced at the function level.</p>
+      </div>
+      <div class="card card-red">
+        <h5>HTTP Method Manipulation</h5>
+        <p>An API may correctly restrict <code>DELETE /users/:id</code> to admins, but fail to check roles for <code>PUT /users/:id</code> on the same endpoint. Switching the HTTP method bypasses the incomplete authorization check. This is common when authorization logic is applied piecemeal per method rather than centrally.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Parameter Manipulation</h5>
+        <p>Some implementations use request parameters for privilege: submitting <code>admin=true</code> in a POST body, or changing URL case. These rely on security by obscurity — the developer "hid" the feature but didn't enforce authorization. Any API proxy tool instantly reveals and allows modification of these parameters.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Security by Obscurity</h5>
+        <p>Hiding admin features from the UI creates a false sense of security. The server-side attack surface remains fully accessible. Attackers use Burp Suite, network traffic analysis, or source code inspection to discover these features. Obscurity is not security — every function must enforce its own authorization requirements.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Why Authorization Bugs Persist</h3>
+    <p>Authorization vulnerabilities are uniquely difficult to catch through automation for several reasons:</p>
+    <ul class="styled-list">
+      <li><strong>Context-dependent logic:</strong> Authorization rules are unique to each application's business domain. A scanner cannot know that "sub-users should not see the parent account's billing data" without understanding the application's intent.</li>
+      <li><strong>Syntactically valid requests:</strong> When authorization fails, the application often processes the request successfully and returns a 200 OK. An automated tool sees a valid transaction — it cannot distinguish authorized access from unauthorized access.</li>
+      <li><strong>Happy-path testing:</strong> QA processes focus on verifying that features work correctly for authorized roles. Negative testing — verifying that unauthorized users are blocked — is frequently omitted or implemented superficially.</li>
+      <li><strong>Microservices fragmentation:</strong> Authorization logic spread across dozens of loosely coupled services creates inconsistency. A single service may fail to validate a token's scope, providing an entry point that bypasses the entire authorization architecture.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 7 ══════ -->
+<section class="chapter" id="ch7">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 07</span>
+      <span class="chapter-tag tag-red">Vulnerabilities</span>
+    </div>
+    <h2>Injection<br><em>Attacks</em></h2>
+    <p class="chapter-intro">Injection vulnerabilities occur when untrusted data is sent to an interpreter as part of a command or query. Despite being well-understood for decades, injection remains one of the most prevalent and damaging vulnerability classes.</p>
+  </div>
+
+  <div class="section">
+    <h3>SQL Injection</h3>
+    <p>SQL injection allows attackers to insert malicious SQL syntax into input fields, manipulating the query logic executed against the database. The consequences range from authentication bypass to complete data exfiltration or deletion.</p>
+
+    <pre><code><span class="code-comment">// Vulnerable query — string concatenation</span>
+<span class="code-danger">query = "SELECT * FROM users WHERE username='" + input + "' AND password='" + pwd + "'"</span>
+
+<span class="code-comment">// Attacker input: username = admin'--</span>
+<span class="code-comment">// Resulting query — comment truncates the password check:</span>
+<span class="code-danger">SELECT * FROM users WHERE username='admin'--' AND password='anything'</span>
+
+<span class="code-comment">// Correct implementation — parameterized query</span>
+<span class="code-key">query</span> = <span class="code-val">"SELECT * FROM users WHERE username=? AND password=?"</span>
+<span class="code-key">params</span> = [input, pwd]  <span class="code-comment">// Parameters treated as data, not SQL</span></code></pre>
+
+    <h4>ORM Tools — Partial Protection</h4>
+    <p>Object-Relational Mapping tools have significantly reduced SQL injection risk by abstracting database interaction. However, vulnerabilities are frequently reintroduced when developers bypass the ORM for performance reasons — writing raw SQL queries, using string concatenation inside ORM hooks, or using "raw" query modes. Any raw SQL string that incorporates untrusted input is vulnerable.</p>
+
+    <h4>NoSQL Injection</h4>
+    <p>NoSQL databases (MongoDB) use JSON/BSON query structures. Attackers inject MongoDB query operators to manipulate logic:</p>
+    <pre><code><span class="code-comment">// Vulnerable MongoDB authentication check</span>
+<span class="code-comment">// Attacker sends: {"username": "admin", "password": {"$ne": null}}</span>
+<span class="code-comment">// The $ne (not equal) operator returns true for any non-null value</span>
+<span class="code-comment">// Result: first admin record returned without knowing the password</span>
+db.users.find({
+  <span class="code-key">username</span>: <span class="code-val">"admin"</span>,
+  <span class="code-key">password</span>: { <span class="code-danger">$ne</span>: <span class="code-val">null</span> }  <span class="code-comment">// Injected operator bypasses auth</span>
+})</code></pre>
+  </div>
+
+  <div class="section">
+    <h3>OS Command Injection</h3>
+    <p>Occurs when an application passes unsanitised user input to a system shell. The application server itself becomes a weapon — executing arbitrary OS commands with the application's system privileges.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">💀</div>
+      <div class="callout-body">
+        <div class="callout-label">Maximum Severity Impact</div>
+        <p>Successful OS command injection typically results in complete server compromise: reading arbitrary files (<code>/etc/passwd</code>, application source code, environment variables), establishing persistent webshells, exfiltrating credentials from memory or disk, and pivoting deeper into the internal network. Attackers use command separators like <code>;</code> (Linux), <code>&amp;</code> or <code>|</code> (both platforms) to chain malicious commands to legitimate ones.</p>
+      </div>
+    </div>
+
+    <h4>GraphQL-Specific Injection Risks</h4>
+    <p>GraphQL's Introspection feature — when left enabled in production — provides attackers with a complete map of all types, fields, queries, and mutations. This is equivalent to handing an attacker the entire API schema. Beyond information disclosure, GraphQL's flexible query model enables resource exhaustion attacks: deeply nested recursive queries (e.g., Authors → Books → Authors → Books…) can consume all server CPU and memory. Batching attacks pack hundreds of password guesses into a single HTTP request, bypassing rate limits that count requests rather than operations.</p>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 8 ══════ -->
+<section class="chapter" id="ch8">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 08</span>
+      <span class="chapter-tag tag-red">Vulnerabilities</span>
+    </div>
+    <h2>XSS, CSRF &amp;<br><em>Client-Side Attacks</em></h2>
+    <p class="chapter-intro">Client-side attacks target the browser itself — turning the user's trusted session against them. Understanding XSS, CSRF, and clickjacking at a mechanistic level is essential for implementing effective defences.</p>
+  </div>
+
+  <div class="section">
+    <h3>Cross-Site Scripting (XSS)</h3>
+    <p>XSS occurs when untrusted data is included in web output without proper encoding, allowing attackers to execute arbitrary JavaScript in a victim's browser. The script runs with the full privileges of the victim's session.</p>
+
+    <div class="card-grid card-grid-3">
+      <div class="card card-red">
+        <h5>Type 1: Stored XSS</h5>
+        <p>Payload permanently stored on the server (database, comment field, profile). Served to every user who views the affected page. A single injection can silently impact thousands of users without requiring targeted phishing. The most severe form.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Type 2: Reflected XSS</h5>
+        <p>Payload returned immediately in the server's response, typically via URL parameters. Requires social engineering — the victim must click a crafted link. Commonly delivered via phishing emails. The malicious script is "reflected" from the server back to the user's browser.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>Type 0: DOM-Based XSS</h5>
+        <p>Payload never reaches the server — it exists entirely in client-side JavaScript. The browser's DOM is modified using attacker-controlled data from "sources" (URL fragments, <code>location.hash</code>). Data flows through the DOM to "sinks" like <code>innerHTML</code> or <code>document.write</code> that execute it.</p>
+      </div>
+    </div>
+
+    <h4>What Attackers Can Do With XSS</h4>
+    <ul class="styled-list">
+      <li><strong>Session Hijacking:</strong> <code>document.cookie</code> exfiltrated to attacker-controlled server to impersonate the user without knowing their password</li>
+      <li><strong>Credential Harvesting:</strong> Inject fake login forms that submit credentials to attacker infrastructure</li>
+      <li><strong>Browser as Bot (BeEF):</strong> "Hook" the browser to a command-and-control server for keystroke logging, screenshots, internal network scanning</li>
+      <li><strong>LocalStorage Theft:</strong> Access and exfiltrate JWTs and other tokens stored in <code>localStorage</code></li>
+      <li><strong>DOM Manipulation:</strong> Alter page content to deceive users into performing actions they don't intend</li>
+    </ul>
+
+    <h4>Why Input Filtering Alone Fails</h4>
+    <p>Input filtering is unreliable as a primary defence. Attackers encode payloads using UTF-7, hexadecimal, or Unicode encoding to bypass filters. More importantly, input that is safe in one context (plain text) can become malicious in another (HTML attribute, JavaScript string, CSS). <strong>Context-aware output encoding</strong> at the point of rendering is the only reliable defence — data must be encoded according to the context where it appears.</p>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚡</div>
+      <div class="callout-body">
+        <div class="callout-label">Framework Escape Hatches</div>
+        <p>Modern frameworks like React provide secure-by-default output encoding. However, developers can bypass this protection using escape hatches: React's <code>dangerouslySetInnerHTML</code>, Angular's <code>bypassSecurityTrustHtml</code>, or Vue's <code>v-html</code>. Any use of these APIs with untrusted data reintroduces XSS. These APIs should be treated as high-risk code requiring mandatory security review.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Cross-Site Request Forgery (CSRF)</h3>
+    <p>CSRF exploits the browser's automatic inclusion of cookies in requests. When a user is logged into <code>bank.com</code>, their session cookie is automatically attached to every request to <code>bank.com</code> — regardless of where the request originates. A malicious site can trigger a state-changing request to <code>bank.com</code>, and the server will process it as legitimate because it carries a valid session cookie.</p>
+
+    <h4>Why CSRF Targets State-Changing Operations</h4>
+    <p>CSRF cannot read the response (SOP prevents this), but it can trigger actions: fund transfers, password changes, account deletion, privilege changes. It's particularly dangerous for endpoints that trust cookies alone as proof of intent.</p>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>Defence</th><th>Mechanism</th><th>Limitations</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Synchronizer Token Pattern</strong></td><td>Unique unpredictable token required in every state-changing request. Attacker cannot read the token via SOP.</td><td>Requires server-side token storage and validation infrastructure</td></tr>
+        <tr><td><strong>SameSite=Strict</strong></td><td>Cookies not sent in any cross-site context whatsoever</td><td>Breaks some legitimate cross-site flows; top-level navigations blocked</td></tr>
+        <tr><td><strong>SameSite=Lax</strong></td><td>Cookies sent for top-level navigations (links) but not sub-requests (img, form)</td><td>Does not protect against subdomain attacks — browsers treat subdomains as same-site</td></tr>
+        <tr><td><strong>Double Submit Cookie</strong></td><td>CSRF token set as cookie and also required in request header/body; values must match</td><td>Vulnerable if attacker can write cookies (XSS or subdomain control)</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <h3>Clickjacking</h3>
+    <p>An attacker overlays a transparent iframe containing the target application over a convincing decoy page. The user believes they're clicking a button on the decoy, but their click actually hits a sensitive function on the invisible target — approving a payment, changing a password, or granting permissions.</p>
+    <p>Defence relies on preventing the application from being embedded in iframes on untrusted sites. Use the CSP <code>frame-ancestors 'none'</code> directive (modern replacement for <code>X-Frame-Options: DENY</code>) to instruct browsers to refuse all iframe embedding. JavaScript framebusting scripts are unreliable — attackers can disable scripts or use the <code>sandbox</code> attribute to block them.</p>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 9 ══════ -->
+<section class="chapter" id="ch9">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 09</span>
+      <span class="chapter-tag tag-red">Vulnerabilities</span>
+    </div>
+    <h2>SSRF, XXE &amp;<br><em>Deserialization</em></h2>
+    <p class="chapter-intro">These three vulnerability classes are particularly dangerous because they allow attackers to use the application itself as a weapon — making the server perform actions on the attacker's behalf, often bypassing network security controls entirely.</p>
+  </div>
+
+  <div class="section">
+    <h3>Server-Side Request Forgery (SSRF)</h3>
+    <p>SSRF occurs when a web application fetches a remote resource based on user-supplied input without validating that the destination is safe. The attacker coerces the application server into acting as a proxy — making requests to destinations it normally wouldn't reach. Because the request originates from the backend server itself, it bypasses perimeter firewalls that block external access to internal services.</p>
+
+    <h4>Attack Targets</h4>
+    <ul class="styled-list">
+      <li><strong>Internal APIs and databases:</strong> Services like Elasticsearch or Redis that are not authenticated because they're "safely" inside the network</li>
+      <li><strong>Administrative interfaces:</strong> Kubernetes API server, Docker daemon, internal management portals</li>
+      <li><strong>Cloud Instance Metadata Service (IMDS):</strong> Available at <code>http://169.254.169.254</code> on all major cloud platforms. Returns IAM role credentials, security tokens, and environment configuration for the instance</li>
+    </ul>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-label">Capital One Breach — SSRF in Practice</div>
+        <p>In 2019, an attacker exploited SSRF via a misconfigured WAF to query the AWS IMDS at <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/</code>. The WAF's IAM role had overly broad S3 permissions. The attacker retrieved temporary credentials, used them to list and download contents from over 700 S3 buckets, and exfiltrated data from approximately 100 million customers. The entire attack chain: SSRF → credentials theft → data exfiltration.</p>
+      </div>
+    </div>
+
+    <h4>Filter Bypass Techniques</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Technique</th><th>How It Works</th></tr></thead>
+      <tbody>
+        <tr><td><strong>DNS Rebinding</strong></td><td>Attacker's DNS initially resolves to a valid external IP (passes allowlist check), then switches resolution to an internal IP when the actual request is made</td></tr>
+        <tr><td><strong>Alternative IP Encodings</strong></td><td>Filters looking for <code>127.0.0.1</code> can be bypassed with <code>0177.0.0.1</code> (octal), <code>2130706433</code> (decimal), or <code>0x7f000001</code> (hex)</td></tr>
+        <tr><td><strong>Open Redirect Chaining</strong></td><td>Use an SSRF to hit a trusted domain that has an open redirect, which then redirects to an internal address</td></tr>
+        <tr><td><strong>URL Fragments and Credentials</strong></td><td><code>http://attacker.com#@169.254.169.254</code> or <code>http://user@169.254.169.254</code> can confuse URL parsers</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Defences</h4>
+    <ul class="check-list">
+      <li><strong>Strict allowlists</strong> — only permit requests to explicitly approved hostnames/IP ranges</li>
+      <li><strong>Disable HTTP redirections</strong> — prevent chaining through open redirects</li>
+      <li><strong>Use IMDSv2</strong> — requires a session token (PUT request) before metadata is accessible, defeating simple SSRF</li>
+      <li><strong>Network egress filtering</strong> — application servers should not be able to reach internal subnets via outbound HTTP</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>XML External Entity (XXE) Injection</h3>
+    <p>XXE targets applications that parse XML input with older or misconfigured parsers. The XML specification includes "entities" — essentially macros that the parser expands. External entities reference URIs that the parser fetches and includes in the document. Attackers abuse this to read arbitrary files or trigger SSRF through the XML parser.</p>
+
+    <pre><code><span class="code-comment">&lt;!-- Attacker sends this XML payload --&gt;</span>
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE foo [
+  &lt;!ENTITY <span class="code-danger">xxe</span> SYSTEM <span class="code-val">"file:///etc/passwd"</span>&gt;
+]&gt;
+&lt;user&gt;
+  &lt;name&gt;<span class="code-danger">&amp;xxe;</span>&lt;/name&gt;  <span class="code-comment">&lt;!-- Parser expands entity, includes /etc/passwd content --&gt;</span>
+&lt;/user&gt;</code></pre>
+
+    <p>The "Billion Laughs" DoS attack uses recursive entity expansion to exponentially consume memory:</p>
+    <pre><code>&lt;!DOCTYPE bomb [
+  &lt;!ENTITY lol <span class="code-val">"lol"</span>&gt;
+  &lt;!ENTITY lol2 <span class="code-val">"&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;"</span>&gt;
+  &lt;!ENTITY lol3 <span class="code-val">"&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;&amp;lol2;"</span>&gt;
+  <span class="code-comment">&lt;!-- Continues until entity expands to gigabytes --&gt;</span>
+]&gt;</code></pre>
+
+    <p><strong>Fix: Completely disable DTD processing and external entity resolution</strong> in the XML parser configuration. Modern parsers often disable these by default, but legacy compatibility settings may re-enable them.</p>
+  </div>
+
+  <div class="section">
+    <h3>Insecure Deserialization</h3>
+    <p>Serialization converts complex in-memory objects into a byte stream for storage or transmission. Deserialization reconstructs the object. The vulnerability arises when an application deserializes untrusted data — the deserializer may follow instructions embedded in the serialized stream to instantiate arbitrary classes <em>before</em> the application logic can inspect the resulting object.</p>
+
+    <h4>Privilege Escalation via Object Tampering</h4>
+    <p>Attackers intercept serialized objects stored in cookies, hidden form fields, or URL parameters and modify their properties. In a PHP session cookie containing a serialized user object with <code>role: "user"</code>, changing it to <code>role: "admin"</code> and re-encoding it grants administrative access if the application deserializes and trusts this data without integrity verification.</p>
+
+    <h4>Gadget Chains — Remote Code Execution</h4>
+    <p>"Gadget chains" are sequences of legitimate classes already available in the application's classpath (like Java's CommonsCollections library) that execute dangerous actions during the deserialization process. Attackers craft serialized payloads containing these chains to achieve arbitrary code execution. Tools like <code>ysoserial</code> automate gadget chain generation for Java; Python's <code>pickle</code> module similarly allows code execution via the <code>__reduce__</code> method.</p>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 10 ══════ -->
+<section class="chapter" id="ch10">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 10</span>
+      <span class="chapter-tag tag-red">Vulnerabilities</span>
+    </div>
+    <h2>OWASP API Security<br><em>Top 10</em></h2>
+    <p class="chapter-intro">The OWASP API Security Top 10 specifically addresses vulnerabilities unique to API-driven architectures — distinct from the general OWASP Top 10 for web applications. APIs require a separate threat model.</p>
+  </div>
+
+  <div class="section">
+    <h3>The Complete API Top 10</h3>
+    <ul class="ranked-list">
+      <div class="ranked-item">
+        <div class="ranked-num">1</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Broken Object Level Authorization (BOLA)</div>
+          <div class="ranked-desc">APIs verify authentication but fail to verify ownership of the specific resource requested. Attackers manipulate IDs in URLs, request bodies, or query strings to access other users' data. Most prevalent API vulnerability because it's a logic flaw invisible to automated scanners. The USPS Informed Visibility API exposed 60 million records through this exact pattern.</div>
+        </div>
+        <span class="badge badge-crit">Critical</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">2</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Broken Authentication</div>
+          <div class="ranked-desc">Weak credential handling — no rate limiting enabling credential stuffing, JWT signature not validated, "none" algorithm accepted, missing token expiry validation, or legacy authentication endpoints bypassing MFA. APIs are particularly vulnerable due to their machine-readable, high-speed nature enabling automated attacks.</div>
+        </div>
+        <span class="badge badge-crit">Critical</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">3</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Broken Object Property Level Authorization (BOPLA)</div>
+          <div class="ranked-desc">Combines Mass Assignment and Excessive Data Exposure. Mass Assignment: frameworks auto-bind all request fields to internal objects — attackers inject <code>is_admin: true</code> or <code>balance: 1000000</code> to overwrite restricted properties. Excessive Data Exposure: API returns complete database objects; the UI filters what's displayed but attackers see the full raw response via proxy tools.</div>
+        </div>
+        <span class="badge badge-crit">Critical</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">4</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Unrestricted Resource Consumption</div>
+          <div class="ranked-desc">No limits on request rate, payload size, query complexity, or execution time. In cloud environments, this manifests as "Denial of Wallet" — auto-scaling responds to malicious load by spinning up infrastructure, generating catastrophic costs for the victim organisation. GraphQL batching attacks pack hundreds of operations into one HTTP request, bypassing per-request rate limiting.</div>
+        </div>
+        <span class="badge badge-high">High</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">5</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Broken Function Level Authorization (BFLA)</div>
+          <div class="ranked-desc">Standard users access administrative functions through forced browsing, HTTP method switching, or manipulating privilege parameters. Developers "hide" admin features from the UI but leave the endpoints unprotected. Vertical privilege escalation: becoming admin without being granted admin rights.</div>
+        </div>
+        <span class="badge badge-high">High</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">6</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Unrestricted Access to Sensitive Business Flows</div>
+          <div class="ranked-desc">Technically valid requests that violate business intent. Scalper bots poll inventory APIs every few seconds and execute purchase transactions in milliseconds, denying access to legitimate users. Coupon code reuse, fake account creation, and referral fraud abuse legitimate API functionality without triggering security alerts.</div>
+        </div>
+        <span class="badge badge-high">High</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">7</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Server-Side Request Forgery (SSRF)</div>
+          <div class="ranked-desc">The application fetches a user-controlled URL, allowing attackers to reach internal services and cloud metadata endpoints. APIs are particularly vulnerable because they frequently need to fetch external content (images, webhooks, integrations) — creating legitimate functionality that attackers exploit.</div>
+        </div>
+        <span class="badge badge-high">High</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">8</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Security Misconfiguration</div>
+          <div class="ranked-desc">GraphQL introspection left enabled in production. CORS configured with wildcard plus credentials. Verbose error messages returning stack traces. Default API keys not rotated. Missing security headers. Informational headers (<code>X-Powered-By</code>, <code>Server</code>) revealing backend technology. Each disclosure helps attackers refine their attack.</div>
+        </div>
+        <span class="badge badge-med">Medium</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">9</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Improper Inventory Management</div>
+          <div class="ranked-desc">Shadow APIs (undocumented endpoints created without security review) and Zombie APIs (deprecated versions that remain accessible but unpatched) provide unmonitored attack surface. These are particularly dangerous because security teams cannot protect assets they don't know exist. In 2024, a Trello SSRF via an unauthenticated endpoint exposed 15 million user records.</div>
+        </div>
+        <span class="badge badge-med">Medium</span>
+      </div>
+      <div class="ranked-item">
+        <div class="ranked-num">10</div>
+        <div class="ranked-body">
+          <div class="ranked-name">Unsafe Consumption of APIs</div>
+          <div class="ranked-desc">Developers trust third-party API responses more than direct user input, applying weaker validation. A compromised upstream partner can inject malicious payloads through a trusted channel that bypasses standard input filtering. Cascading failures propagate errors through dependent microservices.</div>
+        </div>
+        <span class="badge badge-med">Medium</span>
+      </div>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 11 ══════ -->
+<section class="chapter" id="ch11">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 11</span>
+      <span class="chapter-tag tag-teal">Infrastructure</span>
+    </div>
+    <h2>Cloud &amp; Shared<br><em>Responsibility</em></h2>
+    <p class="chapter-intro">Cloud computing has fundamentally changed what organisations are responsible for securing. The Shared Responsibility Model defines where provider obligations end and customer obligations begin — and misunderstanding this model is a leading cause of cloud breaches.</p>
+  </div>
+
+  <div class="section">
+    <h3>The Shared Responsibility Model</h3>
+    <div class="callout callout-danger">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-label">The Fundamental Misconception</div>
+        <p>Many organisations believe that moving to the cloud transfers security responsibility to the provider. In reality: you can outsource data management, but you can <strong>never outsource legal liability</strong>. If your customer data is exposed due to a misconfigured S3 bucket with public read access, the regulatory consequences fall on you — not AWS.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>Service Model</th><th>Provider Responsible For</th><th>Customer Responsible For</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>IaaS</strong><br><span class="mono-tag">(EC2, Azure VMs)</span></td>
+          <td>Physical hardware, network fabric, hypervisor, data centre security</td>
+          <td>Guest OS patching, application, middleware, network configuration (Security Groups, NACLs), identity, data, encryption</td>
+        </tr>
+        <tr>
+          <td><strong>PaaS</strong><br><span class="mono-tag">(App Engine, Elastic Beanstalk)</span></td>
+          <td>OS, runtime, middleware, database patching, application servers</td>
+          <td>Application code, configuration settings, data security, identity management</td>
+        </tr>
+        <tr>
+          <td><strong>SaaS</strong><br><span class="mono-tag">(Salesforce, M365)</span></td>
+          <td>Entire technology stack including application code</td>
+          <td>Identity and access management, data governance, configuration settings (sharing permissions, MFA enforcement), user training</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <h3>Common Cloud Security Failures</h3>
+    <div class="card-grid">
+      <div class="card card-red">
+        <h5>Overly Permissive IAM</h5>
+        <p>IAM roles and policies using wildcards (<code>Action: "*"</code>, <code>Resource: "*"</code>) grant far more access than needed. A compromised function or instance with an over-permissive role allows attackers to access all S3 buckets, any DynamoDB table, or the entire EC2 fleet. Least privilege must be applied per-role.</p>
+      </div>
+      <div class="card card-red">
+        <h5>Public Storage Buckets</h5>
+        <p>S3 buckets or Azure Blob containers accidentally configured with public read access remain a primary cause of mass data exfiltration. Cloud providers now have "Block Public Access" account-level settings — these should be enabled globally and exceptions require explicit business justification.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Open Security Groups</h5>
+        <p>VMs with SSH (port 22) or RDP (port 3389) open to the entire internet (<code>0.0.0.0/0</code>) are immediately targeted by automated scanners. Shodan continuously indexes these. Management ports should only be accessible through a bastion host or VPN, with source IP restrictions.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Static Long-Lived Credentials</h5>
+        <p>AWS access keys beginning with <code>AKIA</code> are static and have no expiry. These are high-value targets for attackers scanning GitHub repositories and package registries. Prefer instance profiles, execution roles, and temporary STS credentials. Audit for static keys using IAM Access Analyzer.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Zero Trust in Cloud Microservices</h3>
+    <p>Traditional "castle-and-moat" security assumed internal network traffic was trustworthy. Cloud microservices environments make this assumption lethal — services span accounts, regions, and providers. Zero Trust mandates: <strong>never trust, always verify.</strong></p>
+
+    <div class="card-grid">
+      <div class="card card-teal">
+        <h5>Mutual TLS (mTLS)</h5>
+        <p>Both client and server present PKI certificates before any connection is established. Eliminates MITM attacks and impersonation between internal services. Neither service can communicate with the other unless both have valid, trusted certificates. The foundation of Zero Trust service-to-service authentication.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>Service Mesh (Istio / Linkerd)</h5>
+        <p>Automates mTLS by injecting sidecar proxies into pods. All internal traffic is transparently upgraded to mTLS without application code changes. Provides traffic observability, circuit breaking, and fine-grained authorisation policies at the infrastructure layer.</p>
+      </div>
+      <div class="card card-purple">
+        <h5>SPIFFE Identity</h5>
+        <p>A standard for issuing verifiable identity documents to workloads in dynamic environments. Every service receives a cryptographic identity (SVID) regardless of IP address or hostname — addressing the challenge of dynamic cloud environments where instances are constantly created and destroyed.</p>
+      </div>
+      <div class="card card-green">
+        <h5>North-South vs East-West</h5>
+        <p>North-South: external traffic entering the cluster, managed by API gateways and ingress controllers. East-West: internal service-to-service traffic, the most under-protected layer. Micro-segmentation via network policies prevents a compromised service from freely communicating with unrelated workloads.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 12 ══════ -->
+<section class="chapter" id="ch12">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 12</span>
+      <span class="chapter-tag tag-teal">Infrastructure</span>
+    </div>
+    <h2>Containers, Kubernetes<br>&amp; <em>Serverless Security</em></h2>
+    <p class="chapter-intro">Modern deployment platforms — containers, orchestration platforms, and serverless functions — each introduce unique security considerations that require dedicated attention beyond traditional application security.</p>
+  </div>
+
+  <div class="section">
+    <h3>Container Security</h3>
+    <p>Containers are isolated processes sharing the host OS kernel — a larger attack surface than VMs, which each have their own kernel. Container security must be addressed across the entire lifecycle: image build, registry storage, and runtime execution.</p>
+
+    <h4>Image Scanning</h4>
+    <p>Container images are the "master copy" of the environment. Any vulnerability or embedded secret in the image is replicated in every running instance — and every future deployment. Security must be integrated into the CI/CD pipeline via automated scanning before images are pushed to registries. Tools like <strong>Trivy</strong>, <strong>Clair</strong>, and <strong>Snyk</strong> build a software bill of materials per image layer, cross-referencing against CVE databases.</p>
+
+    <h4>Runtime Security Controls</h4>
+    <ul class="check-list">
+      <li><strong>Run as non-root</strong> (<code>runAsNonRoot: true</code>) — limits blast radius if container is compromised</li>
+      <li><strong>Read-only root filesystem</strong> — prevents attackers from writing webshells or modifying binaries</li>
+      <li><strong>Drop all capabilities</strong> — remove Linux capabilities not needed by the application</li>
+      <li><strong>No privileged containers</strong> — privileged containers can escape to the host trivially</li>
+      <li><strong>Immutable infrastructure</strong> — never patch containers in place; rebuild from a clean base image</li>
+    </ul>
+
+    <h4>Kubernetes-Specific Security</h4>
+    <p>The Kubernetes API server is the cluster's central control plane — its exposure is equivalent to root access to every workload. In the 2018 Tesla breach, an unauthenticated Kubernetes dashboard exposed cluster secrets including AWS credentials, which were then used for cryptocurrency mining. Every management interface must be authenticated, network-restricted, and monitored.</p>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚡</div>
+      <div class="callout-body">
+        <div class="callout-label">Runtime Monitoring with eBPF</div>
+        <p>Static scanning cannot detect exploits that only manifest at runtime. Tools like <strong>Falco</strong>, <strong>Cilium</strong>, and <strong>KubeArmor</strong> use eBPF technology to monitor kernel-level activity across all containers in real-time. They detect anomalous behaviour — a container spawning a shell, writing to unexpected filesystem locations, or making unusual network connections — and can alert or automatically terminate the offending workload.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Serverless (FaaS) Security</h3>
+    <p>Serverless functions present a different threat model: the infrastructure is managed by the provider, but application code, IAM configuration, and data handling remain the customer's responsibility.</p>
+
+    <h4>Cold Starts, Warm Environments &amp; Data Persistence</h4>
+    <p>A "cold start" deploys a fresh container. Providers keep environments "warm" (AWS Lambda: ~11 minutes, GCP: ~3 minutes) for reuse. Any sensitive data written to <code>/tmp</code> persists until the container is destroyed — and may be accessible to subsequent function invocations. Avoid storing sensitive data in writable directories and treat the function environment as potentially shared.</p>
+
+    <h4>Each Event Trigger is an Attack Surface</h4>
+    <p>Functions can be triggered by HTTP requests, S3 uploads, database changes, SQS messages, or scheduled events. Each trigger represents a potential injection point — an attacker controlling an S3 bucket that triggers a processing function can craft a malicious object to exploit the function's parsing logic.</p>
+
+    <h4>IAM Role Least Privilege</h4>
+    <p>Functions execute under an assigned IAM execution role. If this role uses wildcards (<code>s3:*</code> on <code>Resource: *</code>), a compromised function hands the attacker full S3 access across the entire account. Each function should have a unique IAM role granting only the specific permissions required for its task — verified against actual usage via IAM Access Analyzer.</p>
+
+    <h4>Environment Variable Exposure</h4>
+    <p>Temporary credentials (<code>AWS_SESSION_TOKEN</code>, <code>AWS_SECRET_ACCESS_KEY</code>) are injected as environment variables. Command injection vulnerabilities in function code allow attackers to execute <code>env</code> or read from <code>/proc/self/environ</code> to extract these credentials. Mitigate by preventing command injection (no shell execution of user-controlled input) and using managed secret stores instead of environment variables for long-lived secrets.</p>
+  </div>
+
+  <div class="section">
+    <h3>Infrastructure as Code Security</h3>
+    <p>IaC (Terraform, CloudFormation, ARM templates) enables rapid, repeatable infrastructure deployment. A single misconfiguration in a template can instantly propagate thousands of vulnerable assets across an enterprise. Security must be integrated into the IaC development process itself.</p>
+
+    <div class="card-grid card-grid-3">
+      <div class="card card-red">
+        <h5>Hardcoded Credentials</h5>
+        <p>AWS access keys, API tokens, and SSH keys accidentally embedded in Terraform variables or CloudFormation parameters. These are committed to version control, visible to anyone with repository access, and permanent in git history even after deletion.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Unencrypted Storage</h5>
+        <p>S3 buckets, EBS volumes, and RDS instances deployed without encryption at rest. IaC scanners detect missing <code>server_side_encryption_configuration</code> blocks or <code>storage_encrypted: false</code> settings before deployment.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>Permissive Networking</h5>
+        <p>Security group rules allowing all traffic from <code>0.0.0.0/0</code> on management ports. IaC scanning tools (Checkov, tfsec, KICS) catch these patterns in CI/CD before they reach production — "shifting left" the security gate.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-tip">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-label">Immutable Infrastructure</div>
+        <p>Immutable infrastructure means resources are never modified in place. When a patch or configuration change is needed, a new instance is created from a hardened "golden image" and the old one is destroyed. This eliminates configuration drift — where a system's state gradually deviates from its approved security baseline — and ensures every production environment exactly matches the approved specification.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 13 ══════ -->
+<section class="chapter" id="ch13">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 13</span>
+      <span class="chapter-tag tag-green">Defence</span>
+    </div>
+    <h2>Secure API<br><em>Design Principles</em></h2>
+    <p class="chapter-intro">Security must be designed into an API from inception — not added as an afterthought. This chapter covers the foundational principles that, when applied consistently, eliminate entire classes of vulnerabilities before code is written.</p>
+  </div>
+
+  <div class="section">
+    <h3>Principle of Least Privilege</h3>
+    <p>Every process, user, and program must operate with the absolute minimum permissions necessary for its specific task. This is a design constraint, not a configuration step — it must be applied from the first line of the API specification.</p>
+
+    <div class="card-grid">
+      <div class="card card-green">
+        <h5>Scoped Token Design</h5>
+        <p>Clients receive tokens with the narrowest possible scope for their intended use. A mobile app with read-only requirements receives a read-only token — even if the authenticated user could perform write operations. Scope restriction happens at token issuance, not at the consuming service.</p>
+      </div>
+      <div class="card card-green">
+        <h5>Whitelist-Only Field Updates</h5>
+        <p>Mass Assignment prevention: explicitly define which fields a client may update via a whitelist. Any field not in the whitelist is silently ignored regardless of what the client sends. Never use framework "auto-bind" features with untrusted input without an explicit allowlist of acceptable fields.</p>
+      </div>
+      <div class="card card-green">
+        <h5>Backend Data Filtering</h5>
+        <p>APIs must filter and mask sensitive data at the backend before responding. Never return a full database object and rely on the UI to hide fields. An attacker with a proxy tool sees the full unfiltered response. Return only the fields the client legitimately needs for its specific view.</p>
+      </div>
+      <div class="card card-green">
+        <h5>Token Forwarding Limits</h5>
+        <p>In microservice chains, backend services must not forward the caller's original over-privileged token to upstream services. Each service-to-service call should use a narrowly-scoped token for that specific integration. If Service A calls Service B, Service B receives a token for its specific task — not the end user's full-access token.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Error Handling — The Information Leakage Problem</h3>
+    <p>Verbose error messages are one of the most underestimated security risks. A stack trace containing the database type, ORM library version, file paths, and SQL syntax hands an attacker a detailed map of the backend architecture.</p>
+
+    <h4>The Safe Error Handling Pattern</h4>
+    <div class="flow">
+      <span class="flow-label">Error Response Strategy</span>
+      <div class="flow-node node-danger">Error Occurs<small>Full detail available internally</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-default">Log Internally<small>Full stack trace to SIEM</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-safe">Return to Client<small>Generic 400 or 500 only</small></div>
+    </div>
+
+    <h4>Side-Channel Attacks via Error Response Differences</h4>
+    <p>If a login endpoint takes 200ms for an existing username (password hashed and compared) but only 5ms for a non-existent username (fast-fail before hashing), this timing difference allows user enumeration — even if both paths return identical error messages. Error responses must be <strong>consistent in body, status code, and timing</strong> across all error states.</p>
+  </div>
+
+  <div class="section">
+    <h3>Idempotency, Anti-Replay &amp; Data Integrity</h3>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>Mechanism</th><th>Purpose</th><th>How It Works</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Nonces</strong></td><td>Prevent replay attacks</td><td>Unique number included in each request; server tracks and rejects previously seen nonces</td></tr>
+        <tr><td><strong>Challenge-Response</strong></td><td>Stronger replay prevention</td><td>Server issues a random time-bound challenge the client must sign and return</td></tr>
+        <tr><td><strong>ETags</strong></td><td>Optimistic concurrency, prevent mid-air collisions</td><td>Server returns ETag (version hash) with resource; client includes it in updates via <code>If-Match</code>; server rejects with 412 if resource changed</td></tr>
+        <tr><td><strong>Idempotency Keys</strong></td><td>Safe request retry for payments</td><td>Client generates unique key per logical operation; server returns same result for duplicate submissions with same key</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <h3>Pagination, Sorting &amp; Resource Limits</h3>
+    <p>Unconstrained query parameters allow attackers to trigger resource exhaustion without exploiting any code vulnerability — they simply make legitimate-looking requests that consume disproportionate resources.</p>
+    <ul class="styled-list">
+      <li><strong>"Big Integer" DoS:</strong> requesting <code>?limit=100000000</code> attempts to load the entire database in one query. Server-side pagination with enforced maximum page sizes prevents this.</li>
+      <li><strong>Property Enumeration via sortBy:</strong> Accepting arbitrary column names in <code>?sortBy=internalField</code> reveals hidden database columns by observing which values trigger errors versus which return sorted results.</li>
+      <li><strong>GraphQL Query Depth:</strong> Recursive nested queries can exhaust CPU and memory. Enforce maximum query depth, complexity scoring, and execution timeouts.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>API Versioning &amp; Lifecycle Management</h3>
+    <p>"Zombie APIs" — deprecated versions left running but unpatched — are unmonitored backdoors. The longer an old version runs, the more likely it contains vulnerabilities patched in current versions. A disciplined API lifecycle process is essential.</p>
+    <div class="card-grid">
+      <div class="card card-teal">
+        <h5>Sunset &amp; Deprecation Headers</h5>
+        <p>Per RFC 8594: the <code>Sunset</code> header signals when an endpoint will become unavailable; <code>Deprecation</code> timestamps when usage is discouraged. Clients can detect these headers and migrate automatically. Consumers get warning; operators get a migration timeline.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>API Gateway Lifecycle Enforcement</h5>
+        <p>The API gateway is the single choke point for version retirement. Programmatically disable deprecated endpoints at their sunset date — no manual intervention, no forgotten endpoints. Automated sunsetting closes the zombie API window permanently.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 14 ══════ -->
+<section class="chapter" id="ch14">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 14</span>
+      <span class="chapter-tag tag-green">Defence</span>
+    </div>
+    <h2>Client-Side<br><em>Security</em></h2>
+    <p class="chapter-intro">The browser is the most hostile environment in the security stack — code runs in untrusted territory, users can modify it, and attackers can inject into it. Browser security mechanisms are the last line of defence for client-side data.</p>
+  </div>
+
+  <div class="section">
+    <h3>Token Storage Trade-offs</h3>
+    <div class="split">
+      <div class="split-panel">
+        <div class="split-header attack">localStorage / sessionStorage</div>
+        <ul>
+          <li>Directly accessible via JavaScript — any XSS can exfiltrate tokens</li>
+          <li>Persists across browser sessions (localStorage)</li>
+          <li>Commonly used for JWTs due to developer convenience</li>
+          <li>Zero protection against XSS — single vulnerability exposes all stored tokens</li>
+          <li>OWASP recommendation: do not store sensitive tokens in localStorage</li>
+        </ul>
+      </div>
+      <div class="split-panel">
+        <div class="split-header defense">HttpOnly Cookies</div>
+        <ul>
+          <li>Inaccessible to JavaScript — XSS cannot read the token</li>
+          <li>Automatic inclusion in requests creates CSRF risk</li>
+          <li>SameSite=Strict/Lax mitigates CSRF for same-site contexts</li>
+          <li>Does not protect against subdomain-based attacks</li>
+          <li>Best practice: HttpOnly + Secure + SameSite=Strict</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-tip">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-label">Backend-for-Frontend (BFF) Pattern</div>
+        <p>The most secure token management architecture moves all token handling to a server-side BFF component. The browser never receives or stores tokens. The BFF issues encrypted HttpOnly+SameSite cookies that serve as session references — the actual tokens live server-side. XSS attacks in the browser cannot exfiltrate what the browser never receives. This adds complexity but eliminates the entire class of client-side token theft.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Security Headers</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Header</th><th>Protection</th><th>Key Configuration</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Strict-Transport-Security</strong></td><td>Forces HTTPS; prevents SSL stripping attacks</td><td><code>max-age=31536000; includeSubDomains; preload</code></td></tr>
+        <tr><td><strong>Content-Security-Policy</strong></td><td>Restricts script sources; prevents XSS execution and clickjacking</td><td><code>script-src 'self'; frame-ancestors 'none'; object-src 'none'</code></td></tr>
+        <tr><td><strong>X-Content-Type-Options</strong></td><td>Prevents MIME sniffing — stops scripts disguised as images</td><td><code>nosniff</code> (only valid value)</td></tr>
+        <tr><td><strong>Referrer-Policy</strong></td><td>Prevents leaking sensitive URL data (tokens, IDs) in Referer header</td><td><code>strict-origin-when-cross-origin</code> or <code>no-referrer</code></td></tr>
+        <tr><td><strong>Permissions-Policy</strong></td><td>Restricts access to browser features (camera, geolocation)</td><td><code>camera=(), microphone=(), geolocation=()</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Content Security Policy — In Depth</h4>
+    <p>CSP is the most powerful and complex security header. It defines an allowlist of trusted sources for every type of resource the browser can load. Key directives:</p>
+    <ul class="styled-list">
+      <li><strong><code>script-src</code></strong> — controls JavaScript sources. Avoid <code>'unsafe-inline'</code> and <code>'unsafe-eval'</code>; these defeat the purpose of CSP. Use nonces or hashes for any required inline scripts.</li>
+      <li><strong><code>connect-src</code></strong> — restricts where fetch/XHR/WebSocket requests can be sent. Prevents exfiltration of stolen data to attacker servers.</li>
+      <li><strong><code>frame-ancestors</code></strong> — modern replacement for <code>X-Frame-Options</code>. Controls which domains can embed this page in an iframe. Use <code>'none'</code> to prevent all framing.</li>
+      <li><strong><code>default-src</code></strong> — fallback for directives not explicitly set. Set to <code>'self'</code> as a conservative baseline.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>Subresource Integrity (SRI)</h3>
+    <p>Modern applications load JavaScript from external CDNs. If that CDN is compromised — or if the specific script version is replaced — malicious code runs on every page that loads it. This is the supply chain attack vector that hit the British Airways breach (Magecart attack injected card-skimming code into a third-party script).</p>
+
+    <p>SRI allows browsers to verify that a fetched resource matches a known cryptographic hash. If the file has been altered, the hash won't match and the browser refuses to execute it:</p>
+    <pre><code>&lt;script
+  src="https://cdn.example.com/library.min.js"
+  integrity="<span class="code-val">sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC</span>"
+  crossorigin="anonymous"&gt;
+&lt;/script&gt;</code></pre>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 15 ══════ -->
+<section class="chapter" id="ch15">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 15</span>
+      <span class="chapter-tag tag-green">Defence</span>
+    </div>
+    <h2>Secrets<br><em>Management</em></h2>
+    <p class="chapter-intro">A leaked credential in a cloud environment is functionally equivalent to a username, password, and MFA code combined. Proper secrets management is one of the highest-ROI security investments an organization can make.</p>
+  </div>
+
+  <div class="section">
+    <h3>Where Secrets Live — and Leak</h3>
+    <div class="card-grid">
+      <div class="card card-red">
+        <h5>Hardcoded in Source Code</h5>
+        <p>The most dangerous antipattern. Secrets in code are visible to everyone with repository access, including contractors and open-source contributors. More critically, git history is permanent — deleting a file doesn't remove it from the commit history. Automated scanners (truffleHog, GitLeaks) find these within seconds of a push to GitHub.</p>
+      </div>
+      <div class="card card-red">
+        <h5>Config &amp; Backup Files</h5>
+        <p>Files like <code>wp-config.php</code>, <code>.env</code>, <code>database.yml</code>, or <code>config.json</code> containing credentials. Backup files (<code>.bak</code>, <code>.old</code>, <code>~</code>) accidentally left in public web directories are trivially discovered by automated scanners. Directory listing exposing these files is an immediate critical incident.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Client-Side Code</h5>
+        <p>Mobile apps and JavaScript bundles are delivered to untrusted clients. Any API key embedded in an APK can be extracted by decompiling the application. Browser developer tools expose all JavaScript, including any credentials inadvertently included in frontend bundles. No secret should ever be placed in client-side code.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Verbose Logs ("Toxic Logs")</h5>
+        <p>Authorization headers, session tokens, and API keys written to application logs during debugging. Stack traces containing environment variable dumps. Log aggregation systems become treasure troves of credentials if not carefully designed. Never log sensitive headers or authentication materials.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Managed Secret Stores</h3>
+    <p>Services like <strong>AWS Secrets Manager</strong>, <strong>HashiCorp Vault</strong>, and <strong>Azure Key Vault</strong> provide the correct architecture for secrets management. Applications retrieve secrets dynamically at runtime via authenticated API calls — the sensitive data stays in memory and never touches disk in plaintext.</p>
+
+    <div class="card-grid">
+      <div class="card card-teal">
+        <h5>Centralization</h5>
+        <p>A single encrypted repository eliminates "secrets sprawl" — credentials scattered across dozens of config files, environment variables, and repositories. Security teams can see and manage the complete secrets inventory from one location.</p>
+      </div>
+      <div class="card card-teal">
+        <h5>Audit Trails</h5>
+        <p>Every secret access is logged: who accessed which secret, when, from which IP address. This is critical for forensic analysis after a compromise — analysts can determine exactly which secrets were accessed and whether they need to be rotated.</p>
+      </div>
+      <div class="card card-teal">
+        <h5>Automated Rotation</h5>
+        <p>Regular credential rotation limits the window of opportunity for stolen credentials. A leaked database password that rotates every 24 hours is usable for at most one day. Managed stores handle rotation for both the stored credential and the protected resource (e.g., rotating both the Secrets Manager value and the actual database password simultaneously).</p>
+      </div>
+      <div class="card card-blue">
+        <h5>Short-Lived Credentials</h5>
+        <p>Static IAM access keys (<code>AKIA...</code>) have no expiry. Prefer AWS STS temporary credentials (valid for minutes to hours) that force regular re-authentication. Short token lifetimes combined with rotation dramatically reduce the blast radius of any credential compromise.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>The Business Impact of Credential Leakage</h3>
+    <div class="card-grid">
+      <div class="card card-red">
+        <h5>Authentication Bypass</h5>
+        <p>A leaked cloud API key bypasses all authentication controls — including MFA. The attacker authenticates as the application identity itself, not as a user. Standard authentication monitoring won't flag this because the credentials are technically valid.</p>
+      </div>
+      <div class="card card-red">
+        <h5>Lateral Movement</h5>
+        <p>Credentials found in one application (e.g., a connection string in a config file) often provide access to other systems — internal databases, cloud control planes, or CI/CD pipelines. A single hardcoded root key can grant complete infrastructure access.</p>
+      </div>
+      <div class="card card-red">
+        <h5>"Denial of Wallet" &amp; Destruction</h5>
+        <p>Attackers with administrative cloud credentials can spin up GPU instances for cryptocurrency mining — generating bills of thousands of dollars per day. At the extreme, they can delete all VMs, databases, and backups simultaneously, permanently destroying the business's digital existence. Code Spaces, a GitHub competitor, was destroyed this way in 2014.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 16 ══════ -->
+<section class="chapter" id="ch16">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 16</span>
+      <span class="chapter-tag tag-green">Defence</span>
+    </div>
+    <h2>Logging, Monitoring<br>&amp; <em>Detection</em></h2>
+    <p class="chapter-intro">Attackers spend an average of 200+ days in compromised networks before detection. The difference between discovering a breach in hours versus months is almost entirely determined by the quality of logging and monitoring infrastructure.</p>
+  </div>
+
+  <div class="section">
+    <h3>What to Log — The Five Ws</h3>
+    <p>Every security-relevant log entry must answer: <strong>Who</strong> (authenticated identity, session ID) performed <strong>What</strong> action (HTTP method, resource accessed, data changed) from <strong>Where</strong> (source IP, User-Agent, geographic location) at <strong>When</strong> (precise UTC timestamp) with <strong>What result</strong> (success/failure, status code, bytes transferred).</p>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>Category</th><th>Events to Log</th><th>Security Value</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Authentication</strong></td><td>Login success/failure, MFA attempts, token issuance, session creation/termination</td><td>Detect brute force, credential stuffing, session hijacking</td></tr>
+        <tr><td><strong>Authorization</strong></td><td>403 Forbidden responses, privilege escalation attempts, admin function access</td><td>Detect BOLA/BFLA exploitation, insider threat</td></tr>
+        <tr><td><strong>Input Validation</strong></td><td>Rejected inputs, schema validation failures, rate limit triggers</td><td>Detect fuzzing, reconnaissance, injection attempts</td></tr>
+        <tr><td><strong>Data Access</strong></td><td>CRUD operations on sensitive resources, bulk downloads, export operations</td><td>Detect data exfiltration, scraping attacks</td></tr>
+        <tr><td><strong>System Events</strong></td><td>Service start/stop, configuration changes, dependency failures</td><td>Detect tampering, unauthorized configuration changes</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <div class="callout-label">Never Log — PII &amp; Credentials</div>
+        <p>Logging sensitive data creates a secondary breach target. Passwords, authentication tokens, credit card numbers, and full API keys must never appear in logs. Apply data minimization: mask partial values where reference is needed (e.g., last 4 digits of card), use pseudonymization for personal identifiers, and sanitise request bodies before logging. Logs that contain sensitive data are themselves a GDPR compliance liability.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Detection Signals — Reading Attack Patterns</h3>
+    <div class="card-grid">
+      <div class="card card-amber">
+        <h5>Traffic Anomalies</h5>
+        <p>Consistent machine-speed request timing (bots don't breathe). Unusually high request rates from a single IP or user. "Beaconing" — periodic requests at regular intervals indicating C2 communication. Request volume 10x normal from a single user account.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Authentication Signals</h5>
+        <p>"Impossible travel" — logins from two geographic locations physically impossible in the elapsed time. New device fingerprint or user agent for an established account. Unusual time-of-day access. High-volume failed authentication attempts (credential stuffing).</p>
+      </div>
+      <div class="card card-red">
+        <h5>Scanning Indicators</h5>
+        <p>404 burst (automated path enumeration). 500 spike (injection probing triggering errors). OPTIONS requests against API endpoints (capability discovery). Sqlmap or Hydra signatures in User-Agent strings. SYN scans (half-open connections that never complete handshake).</p>
+      </div>
+      <div class="card card-red">
+        <h5>Exfiltration Signals</h5>
+        <p>Single user account accessing data volumes far beyond their normal baseline. Sequential object ID enumeration with high success rate (BOLA exploitation). Bulk export operations during off-hours. Outbound data transfer volume anomalies.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Cross-Layer Correlation</h3>
+    <p>Individual log sources tell incomplete stories. The power of security monitoring comes from correlating signals across layers:</p>
+    <ul class="styled-list">
+      <li><strong>Application + Database:</strong> Did a suspicious web request actually result in a backend database query? Confirming the full chain distinguishes probing (no DB hit) from successful exploitation (DB query executed).</li>
+      <li><strong>Identity + Network:</strong> Correlating authenticated User IDs from application logs with source IPs from firewall logs attributes network traffic to specific individuals — enabling tracking of an identity across devices and locations.</li>
+      <li><strong>Distributed Tracing:</strong> In microservices, a single Trace ID that persists through the entire request chain (load balancer → API gateway → service A → service B → database) allows analysts to reconstruct the complete path of a malicious request across all components.</li>
+    </ul>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚡</div>
+      <div class="callout-body">
+        <div class="callout-label">Data Graves</div>
+        <p>Many organisations collect logs but never analyse them. Post-breach forensics routinely reveals that the attack was visible in logs for months, but the volume of noise made the signals impossible to detect manually. Centralise all logs in a SIEM or data lake with automated correlation rules, alerting thresholds, and anomaly detection. Logs that are never read are just compliance theatre.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 17 ══════ -->
+<section class="chapter" id="ch17">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 17</span>
+      <span class="chapter-tag tag-green">Defence</span>
+    </div>
+    <h2>DevSecOps &amp;<br><em>Secure SDLC</em></h2>
+    <p class="chapter-intro">Security integrated into the development lifecycle is exponentially cheaper than security bolted on after deployment. This chapter covers the tools, processes, and cultural shifts that make "secure by default" achievable at development speed.</p>
+  </div>
+
+  <div class="section">
+    <h3>The Cost of Finding Vulnerabilities Late</h3>
+    <div class="card-grid card-grid-4">
+      <div class="card">
+        <h5>Design Phase</h5>
+        <p style="font-size:22px; color:var(--green); font-family:var(--mono);">~$25</p>
+        <p>Threat model identifies flaw in architecture before any code exists. Fixed by changing a diagram.</p>
+      </div>
+      <div class="card">
+        <h5>Coding</h5>
+        <p style="font-size:22px; color:var(--teal); font-family:var(--mono);">~$100</p>
+        <p>SAST scanner flags vulnerable pattern. Developer fixes the function immediately.</p>
+      </div>
+      <div class="card">
+        <h5>Testing / QA</h5>
+        <p style="font-size:22px; color:var(--amber); font-family:var(--mono);">~$1,500</p>
+        <p>Penetration test finds vulnerability. Requires code change, retest, and release cycle disruption.</p>
+      </div>
+      <div class="card card-red">
+        <h5>Post-Release</h5>
+        <p style="font-size:22px; color:var(--red); font-family:var(--mono);">~$16,000+</p>
+        <p>Breach discovered. Incident response, forensics, regulatory notification, customer remediation, legal costs, reputational damage.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Threat Modeling</h3>
+    <p>Proactive identification of risks by decomposing the application and understanding its attack surface. Most effective when performed during the design phase — fixing architectural flaws early is orders of magnitude cheaper.</p>
+
+    <h4>STRIDE Threat Categories</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Letter</th><th>Threat</th><th>Violated Property</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><strong>S</strong></td><td>Spoofing</td><td>Authentication</td><td>Attacker uses stolen credentials to impersonate legitimate user</td></tr>
+        <tr><td><strong>T</strong></td><td>Tampering</td><td>Integrity</td><td>Modifying a serialized object to change role or balance values</td></tr>
+        <tr><td><strong>R</strong></td><td>Repudiation</td><td>Non-repudiation</td><td>User denies performing an action; logs insufficient to prove otherwise</td></tr>
+        <tr><td><strong>I</strong></td><td>Information Disclosure</td><td>Confidentiality</td><td>Stack trace reveals database type and version</td></tr>
+        <tr><td><strong>D</strong></td><td>Denial of Service</td><td>Availability</td><td>Deeply nested GraphQL query exhausts server memory</td></tr>
+        <tr><td><strong>E</strong></td><td>Elevation of Privilege</td><td>Authorization</td><td>Standard user accesses admin endpoint via forced browsing</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <h3>Testing Methodologies</h3>
+    <div class="card-grid card-grid-3">
+      <div class="card card-blue">
+        <h5>SAST — Static Analysis</h5>
+        <p>Scans source code without executing it. Finds flaws early; points to exact lines of code. High false-positive rate. Cannot detect runtime configuration issues, logic flaws, or environment-specific bugs. Best for: injection patterns, hardcoded secrets, dangerous function calls.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>DAST — Dynamic Analysis</h5>
+        <p>Black-box testing against a running application from an external attacker perspective. Finds runtime issues: insecure cookies, authentication flows, CORS misconfigurations. Late in the lifecycle; cannot pinpoint specific vulnerable code lines. Best for: integration testing of running services.</p>
+      </div>
+      <div class="card card-teal">
+        <h5>IAST — Interactive Analysis</h5>
+        <p>Agent embedded in the application runtime monitors code execution in real-time. Combines SAST's code visibility with DAST's runtime context. Dramatically lower false-positive rate. Language-specific — requires an agent built for each technology stack. Best of both approaches.</p>
+      </div>
+    </div>
+
+    <h4>Software Composition Analysis (SCA) &amp; SBOM</h4>
+    <p>Modern applications consist of 70–80% third-party code. Every dependency inherits its upstream vulnerabilities. SCA tools automatically inventory all packages (including transitive dependencies — the libraries your libraries depend on) and cross-reference against the National Vulnerability Database. A <strong>Software Bill of Materials (SBOM)</strong> is a machine-readable inventory of every component — when a new CVE like Log4Shell is disclosed, an SBOM allows instant identification of affected services across the entire estate.</p>
+  </div>
+
+  <div class="section">
+    <h3>DevSecOps Culture</h3>
+    <p>Security cannot remain a specialised siloed department that acts as a bottleneck. In DevSecOps, security teams transition from gatekeepers (blocking releases) to guardrail providers (enabling safe deployment by default).</p>
+    <ul class="styled-list">
+      <li><strong>Security Champions:</strong> Senior developers with security training embedded in engineering squads. They run threat modeling sessions, conduct security-focused code reviews, and translate compliance requirements into practical coding guidelines.</li>
+      <li><strong>Secure-by-Default Infrastructure:</strong> New services automatically get HTTPS, network segmentation, and least-privilege IAM roles. Developers can deploy safely within guardrails without becoming security experts themselves.</li>
+      <li><strong>Security as Code:</strong> Security policies expressed as version-controlled code, enforced automatically in CI/CD pipelines. SAST, secret scanning, and SCA checks run on every commit — immediate feedback before code reaches production.</li>
+      <li><strong>Key Metrics:</strong> Mean Time to Remediate (MTTR) for vulnerabilities; vulnerability escape rate (flaws that reach production); automated coverage of high-risk modules.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 18 ══════ -->
+<section class="chapter" id="ch18">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 18</span>
+      <span class="chapter-tag tag-green">Defence</span>
+    </div>
+    <h2>Runtime<br><em>Protection</em></h2>
+    <p class="chapter-intro">Static analysis and design-time controls catch many vulnerabilities — but sophisticated attacks only manifest at runtime. This chapter covers the tools and architectures that provide defence while code is actually executing.</p>
+  </div>
+
+  <div class="section">
+    <h3>Web Application Firewalls (WAFs)</h3>
+    <p>WAFs operate at Layer 7, inspecting HTTP/HTTPS payloads for malicious patterns. They are highly effective at blocking common OWASP Top 10 threats — SQL injection, XSS, command injection — through signature matching and anomaly detection.</p>
+
+    <div class="split">
+      <div class="split-panel">
+        <div class="split-header attack">WAF Strengths</div>
+        <ul>
+          <li>Effective against known attack signatures (SQLi, XSS)</li>
+          <li>Can be deployed without code changes</li>
+          <li>Centralised protection for multiple applications</li>
+          <li>Rate limiting and DDoS absorption</li>
+          <li>Virtual patching for known CVEs before code fix is ready</li>
+        </ul>
+      </div>
+      <div class="split-panel">
+        <div class="split-header defense">WAF Limitations</div>
+        <ul>
+          <li>Cannot understand application business logic</li>
+          <li>Blind to BOLA/IDOR — requests look syntactically valid</li>
+          <li>~95% of API attacks come from authenticated users with valid tokens</li>
+          <li>Attackers encode payloads to bypass signature matching</li>
+          <li>Often set to monitor-only mode to avoid false-positive business impact</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Runtime Application Self-Protection (RASP)</h3>
+    <p>Unlike WAFs that sit at the network edge, RASP agents embed directly into the application runtime (JVM, .NET CLR, Node.js process). By intercepting internal function calls, RASP can inspect data parameters as code actually executes — seeing the internal logic flow rather than just the external HTTP surface.</p>
+
+    <div class="callout callout-tip">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-label">RASP's Contextual Advantage</div>
+        <p>When a RASP agent intercepts a SQL query being constructed, it can see whether user input is flowing into that query without parameterisation — and terminate the request before the query executes. It can differentiate between a suspicious-looking input that is harmlessly handled and an actual exploit attempt. This is particularly valuable for protecting internal microservices that have no WAF coverage.</p>
+      </div>
+    </div>
+
+    <p><strong>Limitations:</strong> RASP introduces CPU and memory overhead in the production environment. It is language-specific — a Java RASP agent cannot protect a Node.js service. And it requires careful tuning to avoid false positives that interrupt legitimate business operations.</p>
+  </div>
+
+  <div class="section">
+    <h3>API Gateways as Policy Enforcement Points</h3>
+    <p>API gateways serve as the centralised front door for all inbound traffic — the Policy Enforcement Point (PEP) in a Zero Trust architecture. They enforce coarse-grained policies that apply universally across all backend services:</p>
+    <ul class="check-list">
+      <li><strong>TLS termination</strong> — centralised certificate management; decrypt, inspect, re-encrypt</li>
+      <li><strong>JWT signature validation</strong> — verify token integrity before any request reaches backend code</li>
+      <li><strong>Rate limiting</strong> — per-user, per-IP, per-endpoint throttling</li>
+      <li><strong>Protocol translation</strong> — convert HTTP/3 to HTTP/1.1, WebSocket to REST, gRPC to REST</li>
+      <li><strong>Request/response transformation</strong> — strip informational headers before responses reach clients</li>
+    </ul>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚡</div>
+      <div class="callout-body">
+        <div class="callout-label">The Gateway's Limitation</div>
+        <p>API gateways are excellent at "macro-authorisation" — checking whether a token is valid and whether a user has the general <em>role</em> to access an API. But they cannot enforce "micro-authorisation" — whether User A should see <em>Resource B specifically</em>. BOLA/IDOR vulnerabilities live entirely in this gap. Fine-grained object-level authorisation must be implemented in the application layer itself, not delegated to the gateway.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 19 ══════ -->
+<section class="chapter" id="ch19">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 19</span>
+      <span class="chapter-tag tag-purple">Context</span>
+    </div>
+    <h2>Third-Party &amp;<br><em>Supply Chain APIs</em></h2>
+    <p class="chapter-intro">Modern applications are deeply interconnected with third-party services. This interconnection creates supply chain risk — a compromised upstream partner can become a vector for attacking every downstream consumer.</p>
+  </div>
+
+  <div class="section">
+    <h3>The Implicit Trust Trap</h3>
+    <p>Developers apply rigorous validation to direct user input but frequently treat third-party API responses as inherently trustworthy. This asymmetry is exploitable: if a payment processor, identity provider, or data enrichment service is compromised, it can deliver malicious payloads through a channel that bypasses standard input filtering.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-label">Experian Partner API — Business Logic Breach</div>
+        <p>A partner with legitimate authorisation to perform credit checks integrated the API into a public-facing website without adequate access controls. Unauthorised users could query the API directly, accessing millions of credit scores. The breach exploited a business logic flaw — the partner was authorised, but had created an unauthorised access path. Providers must enforce granular access controls and cannot rely on partners to implement controls correctly.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Service-to-Service Token Security</h3>
+    <div class="card-grid">
+      <div class="card card-red">
+        <h5>Token Forwarding Antipattern</h5>
+        <p>Forwarding a user's original access token through a chain of microservices creates "overprivileged" tokens. Every service in the chain receives permissions it doesn't need. One compromised service can use the forwarded token to access all downstream resources the user could access.</p>
+      </div>
+      <div class="card card-green">
+        <h5>Token Exchange Pattern</h5>
+        <p>Each service-to-service call uses a fresh, narrowly-scoped token via OAuth 2.0 Token Exchange. Service A calls Service B with a token limited to exactly what Service B needs — not the end user's full token. Blast radius of any compromise is limited to that specific service pair.</p>
+      </div>
+      <div class="card card-amber">
+        <h5>Privilege Creep in Machine Identities</h5>
+        <p>Service accounts accumulate permissions over time as requirements evolve — permissions added but never removed. Machine identities often outnumber human ones and are less frequently reviewed. Regularly audit service account permissions against actual usage patterns.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>The Confused Deputy Problem</h5>
+        <p>A high-privileged service (the deputy) performs an action for a user without verifying if the user has authority for it. An attacker tricks a system-level service into executing a database operation on their behalf — one they could never perform directly. The deputy's privilege is exploited to escalate the attacker's effective permissions.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Webhook Security</h3>
+    <p>Webhooks are incoming HTTP requests where the receiver did not initiate the connection. Standard session authentication doesn't apply — the server must verify the sender's identity and message integrity through alternative means.</p>
+
+    <h4>HMAC Signature Verification</h4>
+    <p>The sender computes an HMAC-SHA256 of the payload using a shared secret and includes it in a header (e.g., <code>X-Signature-256</code>). The receiver independently computes the HMAC of the received payload and compares — if they match, the payload is authentic and unmodified.</p>
+
+    <h4>Replay Attack Prevention</h4>
+    <p>Even authentic signatures can be captured and replayed. Include a timestamp in the signed payload and reject any webhook received more than a defined "replay window" (e.g., 5 minutes) after its timestamp. Combine with a nonce for stronger protection.</p>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div class="callout-body">
+        <div class="callout-label">Webhooks as SSRF Vectors</div>
+        <p>When an application accepts a user-supplied URL for webhook delivery and then makes requests to that URL without validation, it creates an SSRF vulnerability. Attackers configure webhook URLs pointing to internal services (e.g., <code>http://169.254.169.254/</code> for cloud metadata, <code>http://internal-admin:8080/</code> for internal portals). The application becomes a proxy attacking its own infrastructure. Strict allowlists of permitted webhook destination domains and outbound proxy inspection are essential mitigations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 20 ══════ -->
+<section class="chapter" id="ch20">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 20</span>
+      <span class="chapter-tag tag-purple">Context</span>
+    </div>
+    <h2>API Testing &amp;<br><em>Security Assessment</em></h2>
+    <p class="chapter-intro">Effective security testing combines the scale of automation with the contextual intelligence of manual human expertise. Understanding when to use each, and how to combine them, maximises coverage while remaining operationally feasible.</p>
+  </div>
+
+  <div class="section">
+    <h3>Automated vs Manual Testing</h3>
+    <div class="split">
+      <div class="split-panel">
+        <div class="split-header attack">Automated Scanning</div>
+        <ul>
+          <li>Speed and scale — test thousands of inputs in minutes</li>
+          <li>Effective for known patterns: SQLi, XSS, known CVEs</li>
+          <li>Consistent coverage — won't forget to test a parameter</li>
+          <li>Cannot understand business intent or context</li>
+          <li>Will not find logic flaws: "can I skip payment step?"</li>
+          <li>High false-positive rates require human triage</li>
+        </ul>
+      </div>
+      <div class="split-panel">
+        <div class="split-header defense">Manual Testing</div>
+        <ul>
+          <li>Human mindset understands application intent</li>
+          <li>Can find BOLA/BFLA through A-B user testing</li>
+          <li>Identifies workflow manipulation and logic bypasses</li>
+          <li>Slower — not feasible for every deployment</li>
+          <li>Tester quality determines effectiveness</li>
+          <li>Manual findings can tune automated tools for future scans</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>OpenAPI Specification as a Security Contract</h3>
+    <p>The OpenAPI Specification (OAS) provides a machine-readable definition of every endpoint, parameter type, and constraint. This serves as a single source of truth for security testing and enables "design-time auditing" with linting tools like <strong>Spectral</strong> — finding missing authentication directives or unconstrained schemas before code is written.</p>
+
+    <h4>Eliminating Shadow APIs Through Specification</h4>
+    <p>Importing OAS definitions into testing tools (OWASP ZAP, Burp Suite) "seeds" the scanner with all documented endpoints — including those not linked in the UI. This ensures 100% coverage of the documented surface. For undocumented Shadow APIs, tools like <strong>Kiterunner</strong> use wordlists of common API path patterns to discover hidden endpoints through automated enumeration.</p>
+  </div>
+
+  <div class="section">
+    <h3>Authorization Testing Strategy</h3>
+    <h4>The A-B Testing Matrix for Multi-Tenant Systems</h4>
+    <p>The most rigorous approach to BOLA/BFLA testing: create resources as one user (Tenant A) and attempt to access, modify, or delete them using another user's session (Tenant B). This tests both horizontal escalation (accessing peer data) and vertical escalation (lower-privilege user accessing admin functions).</p>
+
+    <div class="table-wrap"><table>
+      <thead><tr><th>Test Case</th><th>Actor</th><th>Expected</th><th>BOLA if...</th></tr></thead>
+      <tbody>
+        <tr><td>Read own resource</td><td>Resource owner</td><td>200 OK</td><td>N/A — baseline</td></tr>
+        <tr><td>Read another user's resource</td><td>Different user, same role</td><td>403 Forbidden</td><td>200 returned with data</td></tr>
+        <tr><td>Read admin resource</td><td>Standard user</td><td>403 Forbidden</td><td>200 returned with data (also BFLA)</td></tr>
+        <tr><td>Modify another user's resource</td><td>Different user, same role</td><td>403 Forbidden</td><td>200 with modification applied</td></tr>
+        <tr><td>Delete another user's resource</td><td>Different user, same role</td><td>403 Forbidden</td><td>200 with deletion successful</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <h3>Audit vs Red Team</h3>
+    <div class="card-grid">
+      <div class="card card-blue">
+        <h5>Compliance Audit</h5>
+        <p>Policy-centric. Compares the system against a standard (PCI DSS, CIS Benchmarks). Produces point-in-time evidence of adherence to specific rules. Answers "are you following the rules?" Good for regulatory requirements; poor at testing whether those rules actually provide security.</p>
+      </div>
+      <div class="card card-red">
+        <h5>Red Team Operation</h5>
+        <p>Goal-oriented and adversarial. Uses real-world Tactics, Techniques, and Procedures (TTPs) to achieve a specific objective: "exfiltrate the crown jewels." Tests the Blue Team's ability to detect and respond to a live threat. Answers "would the rules actually protect you against a skilled attacker?"</p>
+      </div>
+    </div>
+    <p class="mt-md"><strong>Both approaches are necessary.</strong> Compliance proves baseline hygiene. Red teaming proves resilience. An organisation with strong audit scores but no red team experience may be compliant but trivially compromised by a skilled attacker.</p>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 21 ══════ -->
+<section class="chapter" id="ch21">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 21</span>
+      <span class="chapter-tag tag-red">Context</span>
+    </div>
+    <h2>Breach Case<br><em>Studies</em></h2>
+    <p class="chapter-intro">Understanding real breaches — their attack chains, root causes, and what better controls would have prevented — is the most effective way to internalise abstract security concepts.</p>
+  </div>
+
+  <div class="section">
+    <h3>Capital One (2019) — SSRF → Cloud Credential Theft</h3>
+    <div class="flow">
+      <span class="flow-label">Attack Chain</span>
+      <div class="flow-node node-danger">SSRF via misconfigured WAF</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-danger">Query IMDS at 169.254.169.254</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-danger">Steal IAM role credentials</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-danger">List + download 700 S3 buckets</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-danger">100M customer records exfiltrated</div>
+    </div>
+    <p class="mt-sm"><strong>Root causes:</strong> WAF with an over-privileged IAM role; no IMDSv2 requirement; insufficient egress filtering; over-broad S3 permissions. <strong>Prevention:</strong> IMDSv2, least-privilege IAM roles, egress proxy to block IMDS access from WAF.</p>
+
+    <h3 style="margin-top:40px;">Code Spaces (2014) — Credential Theft → Total Destruction</h3>
+    <p>An attacker gained administrative access to Code Spaces' AWS control plane via stolen credentials and demanded payment (extortion). When the company attempted to regain access, the attacker used established persistence to delete all EC2 instances, EBS volumes, machine images, and S3 backups simultaneously. The company had no off-platform backups — it was permanently destroyed.</p>
+    <p><strong>Root causes:</strong> Shared administrative credentials; no MFA on cloud console; all backups in the same account as production. <strong>Prevention:</strong> MFA on cloud console, separate AWS accounts for backups, cross-account backup replication, incident response plan tested in advance.</p>
+
+    <h3 style="margin-top:40px;">SolarWinds (2020) — Supply Chain Compromise</h3>
+    <p>Attackers (nation-state) compromised SolarWinds' build pipeline, injecting SUNBURST malware into the Orion software update mechanism. The malicious code was digitally signed by SolarWinds' legitimate certificate and distributed as a trusted software update to approximately 18,000 organisations, including US government agencies.</p>
+    <p><strong>Root causes:</strong> Insufficient build pipeline security; no code signing verification against a known-good baseline; inadequate monitoring of build environment. <strong>Prevention:</strong> Reproducible builds with cryptographic attestation, separate build environment with strict access controls, SBOM verification, behavioural monitoring of update mechanisms.</p>
+
+    <h3 style="margin-top:40px;">Trello (2024) — Unauthenticated API → Mass Data Scraping</h3>
+    <p>A threat actor exploited an unauthenticated API endpoint to query user data by email address. By automating requests with a large list of known email addresses, the attacker extracted profile information for over 15 million Trello users. The API was designed to facilitate legitimate look-up functionality but had no authentication requirement and no rate limiting.</p>
+    <p><strong>Root causes:</strong> Missing authentication on a public endpoint; no rate limiting; no anomaly detection for bulk enumeration. <strong>Prevention:</strong> All API endpoints must require authentication; rate limiting per IP and per authenticated user; anomaly detection for bulk sequential queries.</p>
+
+    <h3 style="margin-top:40px;">Uber (2022) — MFA Fatigue → Full Infrastructure Compromise</h3>
+    <p>An 18-year-old attacker purchased Uber employee credentials on the dark web, then bombarded the employee with MFA push notifications until the employee approved one. With valid session access, the attacker escalated via finding a PowerShell script in a network share containing hard-coded admin credentials for PAM (Privileged Access Management). Full administrative access to AWS, GCP, Google Workspace, and internal tools was obtained.</p>
+    <p><strong>Root causes:</strong> No MFA fatigue countermeasures (number matching); hard-coded credentials in scripts accessible to employees; insufficient lateral movement barriers. <strong>Prevention:</strong> MFA number matching, behavioural monitoring for prompt floods, secrets scanning on internal repositories, network segmentation limiting scope of credential reuse.</p>
+  </div>
+</section>
+
+<!-- ══════ CHAPTER 22 ══════ -->
+<section class="chapter" id="ch22">
+  <div class="chapter-header">
+    <div class="chapter-eyebrow">
+      <span class="chapter-num">Chapter 22</span>
+      <span class="chapter-tag tag-purple">Context</span>
+    </div>
+    <h2>Governance, Standards<br>&amp; <em>Compliance</em></h2>
+    <p class="chapter-intro">Security governance frameworks provide the structural backbone for an organization's security programme — translating technical controls into auditable requirements and aligning security investment with legal obligations.</p>
+  </div>
+
+  <div class="section">
+    <h3>Key Standards &amp; Their API Security Relevance</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Standard</th><th>Focus</th><th>Key API Security Requirements</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>NIST SP 800-207</strong><br><span class="mono-tag">Zero Trust Architecture</span></td>
+          <td>Zero Trust principles for access control</td>
+          <td>Policy Decision Point evaluates every request; access never granted by network location; continuous verification of identity and device health</td>
+        </tr>
+        <tr>
+          <td><strong>NIST SSDF</strong><br><span class="mono-tag">Secure Software Dev Framework</span></td>
+          <td>Security integration in SDLC</td>
+          <td>"Shift left" — SAST, DAST, SBOMs integrated into CI/CD; threat modeling at design phase; security requirements defined before coding</td>
+        </tr>
+        <tr>
+          <td><strong>ISO 27001/27002</strong><br><span class="mono-tag">Information Security Management</span></td>
+          <td>ISMS framework — organisational security management</td>
+          <td>Annex A.9: Least privilege for all access; Annex A.13: Network segregation to limit lateral movement; Annex A.14: Secure development requirements</td>
+        </tr>
+        <tr>
+          <td><strong>ISO/IEC 27036</strong><br><span class="mono-tag">Supplier Relationships</span></td>
+          <td>Third-party and supply chain security</td>
+          <td>Cannot outsource legal liability for data. Third-party APIs must be assessed for security posture. Supplier contracts must include security requirements and audit rights.</td>
+        </tr>
+        <tr>
+          <td><strong>GDPR</strong><br><span class="mono-tag">General Data Protection Regulation</span></td>
+          <td>Privacy and personal data protection</td>
+          <td>Data Protection by Design: privacy controls integrated into APIs from inception. Data minimisation: return only fields necessary. Right to Erasure: APIs must be able to locate and delete individual's data across distributed services.</td>
+        </tr>
+        <tr>
+          <td><strong>PCI DSS v4.0</strong><br><span class="mono-tag">Payment Card Industry</span></td>
+          <td>Payment card data security</td>
+          <td>MFA required for all privileged API access. Regular penetration testing specifically targeting business logic flaws. TLS 1.2+ mandatory for cardholder data transmission. No storage of CVV/CVC data via API.</td>
+        </tr>
+        <tr>
+          <td><strong>HIPAA</strong><br><span class="mono-tag">Health Insurance Portability</span></td>
+          <td>Healthcare data (PHI) protection</td>
+          <td>All APIs handling PHI: encryption in transit (TLS) and at rest (AES-256). Granular RBAC — minimum necessary access. Complete audit trails of every PHI access event. Business Associate Agreements with all API integrators.</td>
+        </tr>
+        <tr>
+          <td><strong>Singapore PDPA</strong><br><span class="mono-tag">Personal Data Protection Act</span></td>
+          <td>Singapore data protection framework</td>
+          <td>"Reasonable security" requires authentication, authorisation, and TLS. API owners accountable for Excessive Data Exposure and Shadow APIs — viewed as compliance liabilities, not just technical issues.</td>
+        </tr>
+        <tr>
+          <td><strong>MAS TRM</strong><br><span class="mono-tag">Monetary Authority of Singapore</span></td>
+          <td>Financial sector technology risk</td>
+          <td>APIs must resist misuse of valid business logic (referral abuse, scalping). Logging is a cornerstone requirement — all API activity fed into SIEM for real-time monitoring. Incident response procedures must cover API-specific attack scenarios.</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="section">
+    <h3>Operationalising Security Governance</h3>
+    <div class="card-grid">
+      <div class="card card-teal">
+        <h5>From Gatekeepers to Guardrails</h5>
+        <p>Traditional security teams act as manual review bottlenecks. Modern DevSecOps transforms the security team into providers of "secure-by-default" infrastructure — guardrails that enable developers to deploy safely within pre-approved patterns without requiring security team approval for every deployment.</p>
+      </div>
+      <div class="card card-blue">
+        <h5>Security as Code</h5>
+        <p>Security policies expressed as version-controlled code artifacts. SAST rules, DAST configurations, and infrastructure policies automatically enforced with every CI/CD commit. Standards like NIST or OWASP are validated programmatically — not checked manually once a quarter.</p>
+      </div>
+      <div class="card card-purple">
+        <h5>Design-First API Governance</h5>
+        <p>Using OpenAPI Specification as a formal contract before coding begins. Automated linters enforce security requirements at the design stage: authentication defined for every endpoint, data schemas have explicit constraints, sensitive fields are marked. Only operations explicitly defined in the contract are permitted — a positive security model.</p>
+      </div>
+      <div class="card card-green">
+        <h5>API Gateway as Governance Layer</h5>
+        <p>The API gateway centralises enforcement of governance policies across all microservices consistently. Rate limiting, authentication validation, logging, and version management applied uniformly — eliminating per-service implementation inconsistency that creates security gaps.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <div class="callout-label">The Security Programme Maturity Model</div>
+        <p><strong>Compliance proves you followed the rules.</strong> Audits establish a baseline of cyber hygiene and satisfy regulatory requirements. <strong>Red teaming proves whether those rules actually work.</strong> Combining both approaches ensures an organisation has consistent controls <em>and</em> the resilience to survive a targeted attack by a skilled adversary. Compliance without resilience testing is theatre. Resilience testing without compliance is ungoverned. Both, together, are a mature security programme.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Chapter Summary — Core Principles</h3>
+    <ul class="check-list">
+      <li><strong>Zero Trust everywhere:</strong> Never grant trust based on network location. Every request authenticated and authorised, every time.</li>
+      <li><strong>Deny by default:</strong> Access denied unless explicitly granted. Fail secure — never fail open.</li>
+      <li><strong>Least privilege:</strong> Minimum permissions for every user, service, and token. Regularly audited against actual usage.</li>
+      <li><strong>Shift left:</strong> Security integrated at design and development phases. The earlier a flaw is found, the cheaper it is to fix.</li>
+      <li><strong>Defence in depth:</strong> Multiple independent security controls at each layer. No single control is assumed to be sufficient.</li>
+      <li><strong>Inventory everything:</strong> You cannot protect what you cannot see. Complete API catalogues, SBOM, and infrastructure inventory are non-negotiable.</li>
+      <li><strong>Assume breach:</strong> Design monitoring and detection assuming attackers will eventually get in. The goal is rapid detection and containment — not perfect prevention.</li>
+      <li><strong>Automate security:</strong> Manual security checks don't scale. Security as code, enforced in CI/CD, is the only sustainable approach at modern development velocity.</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- back to top -->
+<a href="#cover" id="back-top">↑ Top</a>
+
+<script>
+// Progress bar
+const progress = document.getElementById('progress');
+const backTop = document.getElementById('back-top');
+
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = Math.round((scrollTop / docHeight) * 100);
+  progress.style.width = pct + '%';
+  backTop.classList.toggle('visible', scrollTop > 400);
+});
+
+// Active nav link
+const chapters = document.querySelectorAll('[id]');
+const navLinks = document.querySelectorAll('nav a');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+chapters.forEach(el => observer.observe(el));
+</script>
+</main>
+</body>
+</html>
