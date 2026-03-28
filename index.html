@@ -46,14 +46,14 @@
   <div id="fileList"></div>
 
   <script>
-    const username = "YOUR_USERNAME";
-    const repo = "YOUR_REPO";
+    const username = "Zaiqin";
+    const repo = "HTML";
     const branch = "main";
 
     let allFiles = [];
 
     async function fetchRepoTree() {
-      const url = `https://api.github.com/repos/${Zaiqin}/${HTML}/git/trees/${branch}?recursive=1`;
+      const url = `https://api.github.com/repos/${username}/${repo}/git/trees/${branch}?recursive=1`;
       const res = await fetch(url);
       const data = await res.json();
 
