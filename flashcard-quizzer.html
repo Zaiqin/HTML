@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Flashcard Quizzer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #161f30;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #1e293b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Syne', sans-serif; min-height: 100vh; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 16px; }
+
+  .header { text-align: center; padding: 24px 0 20px; }
+  .header-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); border: 1px solid var(--accent); padding: 3px 10px; border-radius: 2px; letter-spacing: 0.15em; margin-bottom: 12px; text-transform: uppercase; }
+  .header h1 { font-size: 24px; font-weight: 800; background: linear-gradient(135deg,#fff 0%,var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2; margin-bottom: 4px; }
+  .header-sub { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 6px; text-align: center; }
+  .stat-num { font-size: 20px; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1; margin-bottom: 2px; }
+  .stat-num.total { color: var(--accent); } .stat-num.correct { color: var(--green); } .stat-num.wrong { color: var(--red); } .stat-num.remaining { color: var(--yellow); }
+  .stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'JetBrains Mono', monospace; }
+
+  .progress-wrap { background: var(--subtle); border-radius: 4px; height: 4px; margin-bottom: 16px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg,var(--accent2),var(--accent)); border-radius: 4px; transition: width 0.4s ease; }
+
+  .module-row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .mod-btn { font-family: 'JetBrains Mono', monospace; font-size: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); padding: 5px 10px; border-radius: 4px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.05em; }
+  .mod-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.07); }
+
+  .mode-row { display: flex; gap: 8px; margin-bottom: 18px; }
+  .mode-btn { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .mode-btn.active-mode { background: rgba(124,58,237,0.15); border-color: var(--accent2); color: #a78bfa; }
+  .mode-btn:hover:not(.active-mode) { border-color: var(--muted); color: var(--text); }
+
+  .card-wrap { perspective: 1200px; margin-bottom: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; min-height: 220px; padding: 24px 20px 20px; position: relative; transition: border-color 0.3s; overflow: hidden; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,var(--accent2),var(--accent)); opacity: 0.6; }
+  .card.revealed { border-color: rgba(0,212,255,0.3); }
+  .card.correct-glow { border-color: var(--green); box-shadow: 0 0 20px rgba(16,185,129,0.15); }
+  .card.wrong-glow { border-color: var(--red); box-shadow: 0 0 20px rgba(239,68,68,0.15); }
+  .card-module { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--accent2); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card-module::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .card-counter { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); }
+  .question-text { font-size: 16px; font-weight: 600; line-height: 1.5; color: var(--text); margin-bottom: 16px; }
+  .reveal-hint { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; padding: 14px; border: 1px dashed var(--border); border-radius: 8px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .reveal-hint:hover { border-color: var(--accent); color: var(--accent); }
+  .reveal-hint:active { transform: scale(0.98); }
+  .answer-block { display: none; animation: slideIn 0.25s ease; }
+  .answer-block.shown { display: block; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .answer-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .answer-text { font-size: 14px; line-height: 1.6; color: #94a3b8; background: var(--subtle); border-radius: 8px; padding: 12px 14px; border-left: 2px solid var(--green); }
+  .answer-text table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .answer-text th { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+  .answer-text td { padding: 6px 8px; border-bottom: 1px solid rgba(30,45,69,0.5); color: #94a3b8; vertical-align: top; }
+  .judgment-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .j-btn { padding: 12px; border-radius: 10px; border: 1px solid; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .j-btn:active { transform: scale(0.97); }
+  .j-correct { background: rgba(16,185,129,0.1); border-color: var(--green); color: var(--green); }
+  .j-correct:hover { background: rgba(16,185,129,0.2); }
+  .j-wrong { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
+  .j-wrong:hover { background: rgba(239,68,68,0.2); }
+
+  .nav-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .nav-btn { padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn:active { transform: scale(0.97); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .action-row { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .action-btn { flex: 1; min-width: 100px; padding: 10px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-family: 'Syne', sans-serif; font-weight: 600; font-size: 11px; cursor: pointer; transition: all 0.15s; text-align: center; white-space: nowrap; }
+  .action-btn:hover { border-color: var(--muted); color: var(--text); }
+  .action-btn.danger { border-color: rgba(239,68,68,0.4); color: var(--red); }
+  .action-btn.danger:hover { background: rgba(239,68,68,0.1); }
+  .action-btn.highlight { border-color: var(--accent2); color: #a78bfa; background: rgba(124,58,237,0.08); }
+  .action-btn.add-ch { border-color: rgba(0,212,255,0.5); color: var(--accent); background: rgba(0,212,255,0.07); font-size: 12px; }
+  .action-btn.add-ch:hover { background: rgba(0,212,255,0.13); }
+
+  .wrong-panel { display: none; background: var(--surface); border: 1px solid var(--red); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .wrong-panel.open { display: block; }
+  .wrong-panel h3 { font-size: 12px; color: var(--red); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; margin-bottom: 10px; }
+  .wrong-item { font-size: 12px; color: var(--muted); padding: 6px 0; border-bottom: 1px solid var(--border); line-height: 1.4; cursor: pointer; transition: color 0.15s; }
+  .wrong-item:hover { color: var(--text); }
+  .wrong-item:last-child { border-bottom: none; }
+
+  .state-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px 24px; text-align: center; }
+  .state-icon { font-size: 48px; margin-bottom: 16px; }
+  .state-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .state-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  .kb-hint { text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-bottom: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .kb-key { display: inline-flex; align-items: center; gap: 4px; }
+  .key { background: var(--subtle); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; font-size: 9px; }
+
+  /* ═══════════ DRAWER ═══════════ */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; backdrop-filter: blur(4px); align-items: flex-end; justify-content: center; }
+  .drawer-overlay.open { display: flex; }
+  .drawer { background: var(--surface); border: 1px solid var(--border); border-top: 1px solid rgba(0,212,255,0.2); border-radius: 20px 20px 0 0; width: 100%; max-width: 640px; padding: 24px 20px 36px; max-height: 92vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1); }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .drawer-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .drawer-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; background: linear-gradient(135deg,#fff 0%,var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .drawer-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; font-family: 'JetBrains Mono', monospace; }
+  .field-label { font-size: 10px; color: var(--accent); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+  .chapter-name-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; outline: none; transition: border-color 0.15s; margin-bottom: 16px; }
+  .chapter-name-input:focus { border-color: var(--accent); }
+  .chapter-name-input::placeholder { color: var(--muted); font-weight: 400; }
+  .chapter-textarea { width: 100%; min-height: 180px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; resize: vertical; outline: none; transition: border-color 0.15s; margin-bottom: 14px; }
+  .chapter-textarea:focus { border-color: var(--accent); }
+  .chapter-textarea::placeholder { color: var(--muted); }
+
+  .parse-btn { width: 100%; padding: 14px; border-radius: 10px; background: linear-gradient(135deg,var(--accent2),var(--accent)); border: none; color: #fff; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; transition: opacity 0.15s; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .parse-btn:hover { opacity: 0.9; }
+  .parse-btn:active { transform: scale(0.99); }
+  .parse-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .cancel-btn { width: 100%; padding: 12px; border-radius: 10px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .cancel-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  .parse-status { display: none; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; text-align: center; }
+  .parse-status.visible { display: block; }
+  .parse-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .parse-status-text { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .preview-section { display: none; }
+  .preview-section.visible { display: block; }
+  .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .preview-title { font-size: 13px; font-weight: 700; color: var(--green); font-family: 'JetBrains Mono', monospace; }
+  .preview-count { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .preview-list { max-height: 280px; overflow-y: auto; margin-bottom: 14px; }
+  .preview-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 36px 10px 12px; margin-bottom: 8px; position: relative; }
+  .preview-q { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+  .preview-a { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; line-height: 1.4; }
+  .preview-remove { position: absolute; top: 8px; right: 8px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--red); width: 22px; height: 22px; border-radius: 4px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .preview-remove:hover { background: rgba(239,68,68,0.3); }
+  .confirm-btn { width: 100%; padding: 14px; border-radius: 10px; background: rgba(16,185,129,0.12); border: 1px solid var(--green); color: var(--green); font-family: 'Syne', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; transition: all 0.15s; margin-bottom: 10px; }
+  .confirm-btn:hover { background: rgba(16,185,129,0.22); }
+
+  .error-msg { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 12px 14px; color: var(--red); font-size: 12px; font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; display: none; line-height: 1.5; }
+  .error-msg.visible { display: block; }
+
+  .chapters-section { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .chapters-label { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .chapter-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 4px 8px 4px 12px; margin: 0 6px 6px 0; font-size: 11px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+  .chapter-pill-count { color: var(--accent); font-weight: 700; }
+  .chapter-pill-del { background: rgba(239,68,68,0.15); border: none; color: var(--red); width: 18px; height: 18px; border-radius: 50%; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .chapter-pill-del:hover { background: rgba(239,68,68,0.35); }
+</style>
+</head>
+<body>
+
+<!-- ═════════ DRAWER ═════════ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawerIfOutside(event)">
+  <div class="drawer" id="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">＋ Add Chapter</div>
+    <div class="drawer-sub">Paste your raw notes below — bullet points, sub-bullets, tables, anything. Claude will automatically extract Q&amp;A flashcard pairs.</div>
+
+    <div class="field-label">Chapter / Module Name</div>
+    <input class="chapter-name-input" id="chapterName" type="text" placeholder="e.g. Module 5: Zero Trust Architecture" maxlength="60">
+
+    <div class="field-label">Paste Your Notes</div>
+    <textarea class="chapter-textarea" id="chapterText" placeholder="- What is X?&#10;    - X is the concept that does Y&#10;- How does Z work?&#10;    - Z works by...&#10;&#10;Paste any format — bullets, paragraphs, tables."></textarea>
+
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="parse-status" id="parseStatus">
+      <div class="parse-spinner"></div>
+      <div class="parse-status-text" id="parseStatusText">Sending to Claude...</div>
+    </div>
+
+    <div class="preview-section" id="previewSection">
+      <div class="preview-header">
+        <div class="preview-title">✓ Cards extracted</div>
+        <div class="preview-count" id="previewCount"></div>
+      </div>
+      <div class="preview-list" id="previewList"></div>
+      <button class="confirm-btn" onclick="confirmImport()">Add These Cards to Deck →</button>
+    </div>
+
+    <button class="parse-btn" id="parseBtn" onclick="parseChapter()">
+      <span id="parseBtnText">✦ Extract Flashcards with AI</span>
+    </button>
+    <button class="cancel-btn" onclick="closeDrawer()">Cancel</button>
+
+    <div class="chapters-section" id="chaptersSection"></div>
+  </div>
+</div>
+
+<!-- ═════════ APP ═════════ -->
+<div class="app">
+  <div class="header">
+    <div class="header-tag">// study_mode.active</div>
+    <h1>Flashcard Quizzer</h1>
+    <div class="header-sub"><span id="totalCount">0</span> cards · <span id="chapterCount">0</span> chapters</div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-box"><div class="stat-num total"    id="statTotal">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-box"><div class="stat-num correct"  id="statCorrect">0</div><div class="stat-label">Correct</div></div>
+    <div class="stat-box"><div class="stat-num wrong"    id="statWrong">0</div><div class="stat-label">Wrong</div></div>
+    <div class="stat-box"><div class="stat-num remaining"id="statRemaining">0</div><div class="stat-label">Left</div></div>
+  </div>
+
+  <div class="progress-wrap"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="module-row" id="moduleRow"></div>
+
+  <div class="mode-row">
+    <button class="mode-btn active-mode" id="modeAll"   onclick="setMode('all')">📚 All Cards</button>
+    <button class="mode-btn"             id="modeWrong" onclick="setMode('wrong')">🔁 Revise Wrong</button>
+  </div>
+
+  <div class="action-row">
+    <button class="action-btn add-ch"  onclick="openDrawer()">＋ Add Chapter</button>
+    <button class="action-btn highlight" onclick="shuffleDeck()">⇌ Shuffle</button>
+    <button class="action-btn"         onclick="toggleWrongPanel()">⚠ Mistakes</button>
+    <button class="action-btn danger"  onclick="resetAll()">↺ Reset</button>
+  </div>
+
+  <div class="wrong-panel" id="wrongPanel">
+    <h3>⚠ Missed Cards <span id="wrongCount">(0)</span></h3>
+    <div id="wrongList"></div>
+  </div>
+
+  <div class="kb-hint">
+    <span class="kb-key"><span class="key">Space</span> Reveal</span>
+    <span class="kb-key"><span class="key">→</span> / <span class="key">←</span> Navigate</span>
+    <span class="kb-key"><span class="key">G</span> Correct</span>
+    <span class="kb-key"><span class="key">W</span> Wrong</span>
+  </div>
+
+  <div id="mainContent"></div>
+
+  <div class="nav-row" id="navRow">
+    <button class="nav-btn" id="btnPrev" onclick="navigate(-1)">← Prev</button>
+    <button class="nav-btn" style="flex:1;justify-content:center;font-size:12px" onclick="navigate(1)">Skip →</button>
+    <button class="nav-btn" id="btnNext" onclick="navigate(1)">Next →</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// SEED DATA
+// ═══════════════════════════════════════════
+const SEED = [
+  // Module: Foundation of DNS
+  { module: "Week 10: Foundation of DNS", q: "What is an Autonomous System (AS) and an ASN?", a: "An <b>Autonomous System (AS)</b> is a collection of IP networks under a single administrative entity (like an ISP or Google) that follows a unified routing policy. Think of it as an independent country in the digital world.<br><br>Every AS is identified by a unique <b>ASN (Autonomous System Number)</b>, assigned by IANA. This number allows the internet to map any IP address back to its 'owner' for routing and threat intelligence." },
+  { module: "Week 10: Foundation of DNS", q: "What is the difference between Transit and Peering?", a: "<b>Transit:</b> A paid 'customer-provider' relationship. A smaller network pays a larger upstream provider to carry its traffic to the entire global internet.<br><br><b>Peering:</b> A 'barter' relationship between two networks of similar size. They connect directly to exchange traffic between their <i>own</i> customers for free, bypassing the expensive transit providers." },
+  { module: "Week 10: Foundation of DNS", q: "How do economic incentives drive BGP routing decisions?", a: "BGP is a <b>policy protocol</b>, not a performance protocol. It chooses paths based on cost, not speed.<br><br><b>Valley-Free Routing:</b> Routers follow a strict financial hierarchy:<br>1. <b>Prefer Customer:</b> They make money here.<br>2. <b>Prefer Peer:</b> It’s free.<br>3. <b>Prefer Provider:</b> This is the last resort because it costs money.<br><br><b>Security Risk:</b> An attacker can announce a 'cheaper' or 'shorter' path, and your router may choose it over a valid one simply because it follows these programmed economic rules." },
+  { module: "Week 10: Foundation of DNS", q: "What is the distinction between the Control Plane and the Data Plane?", a: "<b>Control Plane (The Brain):</b> The BGP process on the router's CPU that exchanges updates and builds the 'map' of the internet.<br><b>Data Plane (The Muscle):</b> Specialized hardware (ASICs) that physically forwards packets at high speed based on the map provided by the Control Plane." },
+  { module: "Week 10: Foundation of DNS", q: "Why is the 'Default Trust Assumption' the root of BGP attacks?", a: "BGP was built in 1989 on a 'handshake' model. By design, routers <b>implicitly trust</b> any route announcement they receive from a neighbor. There is no built-in verification to prove a network actually owns the IP addresses it claims to have, leading to BGP Hijacking and Route Leaks." },
+  { module: "Week 10: Foundation of DNS", q: "How does a route spread through 'Propagation'?", a: "Routing is <b>eventually consistent</b>. When a network in Singapore announces a route, it ripples out to neighbors who then tell their neighbors (like a global game of 'Telephone'). There is no central authority; the internet relies on these distributed updates to stabilize." },
+  { module: "Week 10: Foundation of DNS", q: "What are the trade-offs between Single-Homed and Multi-Homed architectures?", a: "<b>Single-Homed:</b> Connecting to only one ISP. It is simple and cheap but creates a single point of failure.<br><b>Multi-Homed:</b> Connecting to two or more ISPs. This provides <b>resiliency</b> through redundancy but increases <b>exposure</b> because there are now multiple 'doors' and complex BGP configurations to secure." },
+  { module: "Week 10: Foundation of DNS", q: "Where does your control end in internet routing?", a: "You can enforce security policies (like firewalls and ACLs) inside your own AS. However, once a packet leaves your border and enters the public internet, you lose all control over which path it takes or who inspects it. This is the core of <b>Internet Risk</b>." },
+  { module: "Week 10: Foundation of DNS", q: "How do attackers target the Control Plane vs. the Data Plane?", a: "While the Data Plane has massive bandwidth, the Control Plane (CPU) is a bottleneck. Attackers use <b>Denial of Service (DoS)</b> attacks to flood a router with BGP updates. If the CPU hits 100%, it can't process keepalives, causing BGP sessions to drop and the network to collapse—even if the physical links are empty." },
+  { module: "Week 10: Foundation of DNS", q: "Why is there no 'Central Brain' for the internet?", a: "The internet lacks a master server or 'God View' of the routing table. Instead, it relies on <b>Distributed Consensus</b>. Every router builds its own map based solely on what its immediate neighbors tell it. This makes the entire system a global game of 'Telephone' based on mutual trust." },
+  { module: "Week 10: Foundation of DNS", q: "What is 'Eventual Consistency' in routing?", a: "Changes (like a fiber cut in Tokyo) are not instantaneous. The information propagates hop-by-hop as a 'rumor.' During this <b>convergence time</b>, different parts of the internet have different, conflicting maps of the world." },
+  { module: "Week 10: Foundation of DNS", q: "What is the security implication of this latency?", a: "You cannot 'turn off' a malicious route instantly. If an attacker hijacks your IP, your defensive counter-announcement must also travel hop-by-hop. This creates a <b>race against propagation latency</b>, where the attacker may continue to receive your traffic for minutes or hours until the 'correction' spreads globally." },
+  { module: "Week 10: Foundation of DNS", q: "What is the 'Supreme Rule' of routing?", a: "<b>Longest Prefix Match (LPM)</b> overrides every other rule. A router will always prefer a more specific route (e.g., /24) over a broader one (e.g., /19). Attackers exploit this by announcing highly specific subnets of your IP space to 'steal' traffic, even if their path is technically longer." },
+  { module: "Week 10: Foundation of DNS", q: "How do BGP attributes like Local Pref and AS_PATH work?", a: "<b>Local Preference:</b> An internal setting used to pick the 'cheapest' exit (e.g., preferring a free peering link over a paid transit provider).<br><b>AS_PATH Length:</b> If all else is equal, BGP chooses the path that crosses the fewest Autonomous Systems." },
+  { module: "Week 10: Foundation of DNS", q: "Why do routers use 'Dampening'?", a: "If a route 'flaps' (goes up and down rapidly), it can exhaust a router's <b>Control Plane CPU</b>. Dampening mechanisms temporarily ignore unstable routes to prevent the CPU from crashing, prioritizing network stability over rapid updates." },
+  { module: "Week 10: Foundation of DNS", q: "What is the 'handshake' flaw of 1989?", a: "BGP was designed for a small circle of trusted government and university peers. It <b>implicitly trusts</b> any neighbor that says 'I am Google' or 'I own this IP.' There is no native verification to prove ownership." },
+  { module: "Week 10: Foundation of DNS", q: "How does this lead to Prefix Hijacking?", a: "Because there is no built-in 'ID check,' a malicious actor can announce your IP prefix. Routers globally will accept and propagate this false claim, redirecting your users to the attacker's infrastructure." },
+  { module: "Week 10: Foundation of DNS", q: "What are the 'bolt-on' security patches?", a: "Since the protocol itself is insecure, tools like <b>RPKI (Resource Public Key Infrastructure)</b> have been added. RPKI uses digital certificates to link an IP prefix to a specific ASN, allowing routers to cryptographically verify if an announcement is authorized." },
+  { module: "Week 10: Foundation of DNS", q: "Single Upstream vs. Multi-Homed:", a: `<table><tr><th>Model</th><th>Pros</th><th>Cons</th></tr><tr><td><b>Single Upstream</b></td><td>Simple, cheap, no BGP knowledge needed.</td><td><b>Single Point of Failure</b>; one fiber cut takes you offline.</td></tr><tr><td><b>Multi-Homed</b></td><td><b>Resiliency</b> and redundancy; traffic can failover.</td><td>Highly complex; requires your own ASN and BGP management.</td></tr></table>` },
+  { module: "Week 10: Foundation of DNS", q: "The Exposure Trade-off:", a: "Multi-homing increases your <b>attack surface</b>. You are reachable through multiple paths, and a single BGP misconfiguration on your end can cause a <b>Route Leak</b>, accidentally turning your corporate network into a transit hub for the rest of the world and crashing your bandwidth." },
+  { module: "Week 10: Foundation of DNS", q: "The Boundary vs. The Void:", a: "<b>Inside your AS:</b> You have absolute authority. You use IGPs (OSPF/iBGP) to dictate exactly how traffic flows.<br><b>Outside your AS:</b> You enter 'The Void.' Once a packet leaves your border, you have <b>zero control</b>. Your ISP might route your London-bound traffic through a hostile nation if it’s cheaper for them." },
+  { module: "Week 10: Foundation of DNS", q: "Why is Encryption (TLS/VPN) non-negotiable?", a: "Since you cannot control the physical path or prevent hijacking at the routing layer, you must assume the transport path is <b>hostile</b>. Encryption ensures that even if a packet is intercepted or misrouted, the data remains confidential and intact." },
+  { module: "Week 10: Foundation of DNS", q: "How is the DNS hierarchy structured?", a: "DNS is a <b>distributed, hierarchical database</b> organized like a tree.<br><b>Root (.)</b>: The top level (managed by ICANN). It doesn't have all IPs; it simply knows which servers handle Top-Level Domains (TLDs).<br><b>TLD</b>: Extensions like .com, .org, or .sg. These point to the specific organization's servers.<br><b>Authoritative Nameserver</b>: The 'Source of Truth' for a specific domain. it holds the <b>Zone File</b> (the actual IP mapping).<br><b>Recursive Resolver</b>: The 'Librarian.' It does the hard work of traveling the tree (Root → TLD → Authoritative) to find an answer for the user." },
+  { module: "Week 10: Foundation of DNS", q: "Recursive vs. Iterative Queries: What’s the difference?", a: "<b>Recursive Query:</b> The client (Stub Resolver) asks the Recursive Resolver: 'Find me the IP for google.com; I’ll wait for the final answer.'<br><b>Iterative Query:</b> The Recursive Resolver asks the hierarchy: 'Hey Root, where is .com?' → 'Hey .com, where is google.com?' until it gets the final answer." },
+  { module: "Week 10: Foundation of DNS", q: "How does Caching and TTL affect the network?", a: `<b>Caching:</b> To avoid repeating the 'Librarian' walk, resolvers save answers in memory. This is the primary target for <b>Cache Poisoning</b> attacks, where an attacker injects a fake IP into the resolver's memory.<br><b>TTL (Time to Live):</b> A timer set by the admin.<ul><li><b>Short TTL:</b> High agility (easy to change IPs during an attack) but puts a high load on servers.</li><li><b>Long TTL:</b> High stability but causes <b>Propagation Delay</b>—if you change an IP, the old one stays in global caches until the timer hits zero.</li></ul>` },
+  { module: "Week 10: Foundation of DNS", q: "What is Anycast and why is it the 'gold standard'?", a: "In <b>Anycast</b>, multiple servers globally share the <b>same IP address</b>.<br><b>BGP</b> routes the user to the 'closest' healthy node.<br><b>Native DDoS Mitigation:</b> If one node (e.g., London) is flooded by an attack, BGP identifies the failure and automatically reroutes legitimate traffic to the next closest node (e.g., Paris), spreading the attack load across a global network." },
+  { module: "Week 10: Foundation of DNS", q: "Why is Split-Horizon DNS critical for internal security?", a: "This technique provides <b>different answers</b> depending on who is asking.<br><b>Internal View:</b> Resolves intranet.corp.com to a private IP (e.g., 10.10.10.5).<br><b>External View:</b> Returns NXDOMAIN (Does not exist) for the same query.<br><b>Security Value:</b> It prevents <b>Reconnaissance</b>. If an attacker can't resolve your internal hostnames, they can't map your internal network topology from the outside." },
+  { module: "Week 10: Foundation of DNS", q: "Why is DNS called the 'Achilles' Heel' of the internet?", a: "DNS is a <b>single point of systemic failure</b>. If resolution fails, the 'pipes' might be fine, but the 'directory' is gone.<br><b>Web/Email:</b> Cannot find IPs or MX records.<br><b>Active Directory:</b> Users cannot log in because workstations can't find Domain Controllers via SRV records.<br><b>Physical Security:</b> IoT badge readers may fail if they cannot resolve the address of the central authorization server." },
+  { module: "Week 10: Foundation of DNS", q: "What is the 'Implicit Trust' flaw?", a: "DNS traditionally operates on a <b>'first response wins'</b> basis over UDP. It does not verify the sender's identity, only that the Transaction ID matches. This architectural flaw is why we use <b>DNSSEC</b> to cryptographically sign responses and ensure they actually came from the authoritative source." },
+  { module: "Week 10: Foundation of DNS", q: "What is the core design flaw of the 1983 DNS protocol?", a: "DNS was built for a small, cooperative network of researchers. It was designed for <b>efficiency</b>, not security. The protocol operates on a <b>'default trust'</b> model, meaning it lacks native mechanisms to verify who is sending a response or if the data was altered in transit." },
+  { module: "Week 10: Foundation of DNS", q: "How does the 'First Response Wins' vulnerability work?", a: "When a resolver sends a query, it opens a UDP socket and waits. It identifies the correct answer by matching a <b>16-bit Transaction ID</b>.<br><b>The Race:</b> The resolver accepts the <b>very first</b> packet it receives that matches that ID. If an attacker can 'race' the legitimate server and get their spoofed packet to the resolver first, the resolver accepts the lie as absolute truth and closes the socket." },
+  { module: "Week 10: Foundation of DNS", q: "What does it mean that DNS has 'No Integrity'?", a: "Standard DNS has no built-in 'tamper-evident' seal. A resolver cannot verify if the IP address inside a packet is the one the domain owner actually intended. This allows for <b>DNS Cache Poisoning</b>, where an attacker injects a malicious IP into a resolver's cache, redirecting all future users to a fake site until the TTL expires." },
+  { module: "Week 10: Foundation of DNS", q: "How do DNSSEC and Source Port Randomization fix these flaws?", a: "<b>DNSSEC (DNS Security Extensions):</b> Adds digital signatures (<b>RRSIG records</b>) to DNS data. This creates a cryptographic chain of trust, allowing the resolver to mathematically prove the response is authentic and hasn't been tampered with.<br><b>Source Port Randomization:</b> In the original protocol, only the 16-bit Transaction ID had to be guessed. By also randomizing the <b>Source Port</b>, we increase the entropy from 16 bits to approximately 32 bits. This makes it significantly harder for an attacker to successfully 'guess' the correct parameters during their race." },
+
+  // Module 2 : Threats and Failure Modes
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "How does 'Prefix Hijacking' work?", a: "It relies on the <b>Longest Prefix Match</b> rule. BGP always prefers a more specific route (e.g., /24) over a broader one (e.g., /16).<br><b>Sub-Prefix Hijack:</b> An attacker announces a smaller subnet of your IP space. Because the specific route wins, traffic is 'stolen' globally, even if the attacker's path is much longer.<br><b>Full Prefix Hijack:</b> The attacker announces the exact same prefix as you. The internet 'splits,' and traffic goes to whoever is 'closer' in terms of BGP hop count." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What is a 'Route Leak' (The Fat Finger Problem)?", a: "Most BGP incidents are accidental misconfigurations. A <b>Route Leak</b> occurs when an AS accidentally tells one neighbor it can reach another neighbor, violating policy.<br><b>The 'Garden Hose' Effect:</b> A small ISP might accidentally offer to route traffic between two Tier-1 giants (like Verizon and Level 3). Suddenly, terabits of global traffic try to squeeze through the small ISP's limited hardware, causing a total crash.<br><b>Defense:</b> Using <b>Max-Prefix Limits</b> (a circuit breaker that kills a session if too many routes are sent) and <b>Prefix Lists</b> (a whitelist of allowed routes)." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "How do attackers use 'AS Path Manipulation' for detours?", a: "Instead of stealing a prefix, attackers change the attributes of existing routes to make their path look more attractive.<br><b>AS Prepending:</b> Legitimate users add their ASN multiple times to make a path look 'longer' and less desirable. Attackers can strip these to make their path look 'shorter.'<br><b>Origin Manipulation:</b> BGP prefers routes marked as <b>IGP</b> (Internal) over <b>EGP</b> (External). Attackers can fraudulently change this flag to win the 'Best Path' decision." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "Interception vs. Blackholing: Which is more dangerous?", a: `<table><tr><th>Impact Type</th><th>Goal</th><th>Method</th><th>Detection</th></tr><tr><td><b>Blackholing</b></td><td>Destruction (DoS)</td><td>Attract traffic and drop it (Null route).</td><td><b>Noisy:</b> Site goes down immediately; easy to spot.</td></tr><tr><td><b>Interception</b></td><td>Espionage (MitM)</td><td>Attract traffic, copy/inspect it, then forward it to the real destination.</td><td><b>Silent:</b> Very hard to detect; only a tiny increase in latency.</td></tr></table>` },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "Why is 'Intent' hard to prove in BGP?", a: "From a technical level, a state-sponsored hijack and a tired admin’s typo look nearly identical. This is why defensive teams focus on <b>Impact</b> and <b>Blast Radius</b> rather than trying to assign blame immediately." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What can we learn from the YouTube vs. Pakistan Telecom incident?", a: "In 2008, Pakistan Telecom tried to block YouTube locally by announcing a more specific route to a 'null' destination. However, they accidentally leaked this route to their upstream provider. Because of <b>Longest Prefix Match</b>, the 'black hole' propagated globally, taking YouTube offline for the entire world within minutes." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What is the fundamental 'Analyst's Dilemma' when identifying BGP routing anomalies?", a: "The primary challenge is distinguishing between a 'fat finger' configuration error and an intentional attack. Because BGP was designed in an era of trust, it lacks native mechanisms to verify a neighbor's intent; a router processes a misconfiguration just as validly as a malicious hijack. Analysts must infer intent based on the scope and scale of the change." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "How do 'Accidental Incidents' typically manifest in global routing?", a: "Accidents are characterized by massive scale and a lack of discrimination. These 'Route Leaks' occur when an Autonomous System (AS) mistakenly propagates unrelated prefixes to neighbors. For example, the 2021 Vodafone Idea incident involved over 30,000 accidental prefixes, causing a 13x spike in traffic—a clear sign of incompetence rather than surgical malice." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What distinguishes 'Malicious Attacks' in the BGP landscape?", a: "Malicious attacks are defined by precision and the use of the 'longest prefix match' rule to be surgical. Instead of leaking thousands of routes, an attacker hijacks exactly one high-value /24 subnet (e.g., a crypto exchange). A prime example is the 2017 Rostelecom incident, which redirected traffic specifically from major financial institutions." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "Why does Incident Response (IR) prioritize impact over attribution in routing failures?", a: "Whether caused by a typo or a state actor, the mitigation is identical: filtering the bad routes. IR teams should not waste critical time guessing 'Why' (attribution) before fixing the 'What' (availability). Forensic analysis of intent is reserved for the post-mortem phase." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What was the initial intent and technical mechanism used in the 2008 YouTube incident?", a: "The intent was local censorship of a specific video within Pakistan. Pakistan Telecom created a 'blackhole' route for YouTube’s IP space. However, this internal configuration leaked to their upstream provider (PCCW)." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "Why did a local censorship attempt result in a global outage?", a: "Due to the 'Longest Prefix Match' algorithm, routers globally preferred Pakistan Telecom's more specific /24 subnet over YouTube's broader legitimate advertisement. This swerved global traffic into a network that could not handle the load, leading to a 2-hour worldwide outage." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What is the critical lesson learned regarding the 'Blast Radius' of BGP?", a: "BGP has no geographic borders; a configuration error in a small regional ISP can propagate globally in seconds. It highlights the extreme fragility of the internet's trust model, where a single point of failure can lead to systemic collapse." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What is the objective of a DNS Integrity Attack?", a: "The goal is to compromise the accuracy of resolution, redirecting users to a malicious site while they believe they are on a legitimate one. This betrays the 'directory service,' harvesting credentials or distributing malware even if the user's behavior is correct." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "How does 'Cache Poisoning' (Spoofing) exploit the DNS race condition?", a: "It exploits the stateless nature of traditional DNS (Do53). An attacker floods a recursive resolver with spoofed responses, trying to guess the Transaction ID. If they reply faster than the real nameserver, the resolver caches the malicious IP for the duration of the TTL." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What is a 'Registrar Takeover' and how does it differ from protocol exploits?", a: "This is an administrative breach where an attacker gains access to an account (e.g., GoDaddy) and changes the authoritative Name Server (NS) records. While cache poisoning is like pasting a sticker on a phonebook, a takeover is like owning the printing press—it grants persistent, global control." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "How do availability attacks against Authoritative Servers impact the internet?", a: "By flooding the nameservers hosting a domain's 'zone file' (e.g., the 1.2 Tbps 2016 DynDNS attack), attackers make the service invisible. The web servers remain functional, but because the 'phonebook' is gone, users cannot resolve the hostname to an IP." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What is 'DNS Amplification' and how is it used in DDoS?", a: "Attackers send small queries (with a spoofed victim IP) to 'Open Resolvers.' These resolvers send massive responses back to the victim. This multiplier effect (e.g., a 60-byte query resulting in a 512-byte response) allows an attacker to overwhelm a victim's bandwidth with minimal effort." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "How does 'DNS Tunneling' allow for data exfiltration and C2?", a: "It encapsulates non-DNS traffic (like credit card data) inside DNS queries. Malware encodes data into subdomains (e.g., data.evil.com). The attacker-controlled authoritative server logs the query to reconstruct the data. Commands are sent back to the malware via TXT or CNAME records in the DNS response." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "Why is DNS tunneling particularly effective against firewalls?", a: "Most firewalls block ports like 80, 443, or 22 for unknown destinations, but almost all allow UDP port 53 because blocking it would break the network. DNS creates a 'firewall blind spot,' allowing data to bypass segmentation by using internal resolvers as proxies." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "What is 'Domain Shadowing' and why is it used?", a: "Attackers compromise a legitimate registrar account and create thousands of subdomains (e.g., update.pizza.com) without changing the main site. This leverages the established reputation of the parent domain to bypass security filters and WAFs." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "How does 'Fast-Flux' create a 'moving target' for defenders?", a: "Attackers associate a constantly changing set of IP addresses with a single domain by setting extremely low TTL values (as low as 90 seconds). By the time a defender blocks one IP, the domain already resolves to a new one, rendering static blocklisting ineffective." },
+  { module: "Week 10: Module 2 : Threats and Failure Modes", q: "Why is DNS considered the ultimate 'Living off the Land' (LOL) protocol for malware?", a: "It has universal reach (every device uses it), a trusted status (rarely inspected as deeply as HTTP), and high availability (designed for resilience). Malware authors piggyback on this essential infrastructure to hide their traffic in legitimate noise." },
+
+  // Module 3 : Risk Reduction and Engineering Controls
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Deny All' principle in BGP prefix filtering?", a: "It is a whitelist approach where the router is configured to drop all incoming and outgoing route advertisements by default, explicitly permitting only known, authorized IP prefixes." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How do Ingress and Egress filtering protect a network?", a: "<b>Ingress Filtering:</b> Prevents a neighbor (like a small customer) from lying about reaching major networks (like Google).<br><b>Egress Filtering:</b> Prevents your own network from accidentally leaking internal lab routes or private management subnets to the public internet." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the function of a 'Max-Prefix Limit'?", a: "It acts as a 'circuit breaker' or safety valve. If a neighbor suddenly sends an unusual spike in routes (e.g., 30,000 instead of 50), the router automatically shuts down the BGP session to prevent memory exhaustion and hardware crashes." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What are 'Bogons' and why must they be filtered?", a: "Bogons are IP prefixes that should never appear in the public routing table, such as private addresses (RFC 1918) or reserved space. Filtering them at the perimeter stops attackers from using spoofed private IPs to bypass security." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is RPKI and what problem does it solve?", a: "<b>RPKI (Resource Public Key Infrastructure)</b> is 'SSL for BGP.' It replaces the 1989 'handshake' trust model with cryptographic verification, proving that an entity actually has permission to announce a specific IP prefix." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Who are the 'Trust Anchors' in the RPKI hierarchy?", a: "The five Regional Internet Registries (RIRs), such as <b>ARIN</b> and <b>RIPE</b>, act as the Root Certificate Authorities (CAs). They issue the digital certificates that validate the resources allocated to organizations." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is a Resource Certificate?", a: "It is a digital certificate (similar to X.509) held by an IP owner. It uses a private key to sign statements authorizing a specific Autonomous System (ASN) to route their traffic." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is a Route Origin Authorization (ROA)?", a: "A ROA is the actual signed cryptographic document. It is a formal statement (e.g., 'ASN 65001 is authorized to announce 10.1.0.0/16') that serves as the digital 'title deed' for IP space." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What are the three RPKI Validation States?", a: "<b>Valid:</b> The signature, ASN, and prefix length all match the ROA. (Result: Allow the route).<br><b>Invalid:</b> A ROA exists, but the BGP update contradicts it (wrong ASN or prefix too specific). (Result: <b>DROP IT</b> to prevent hijacks).<br><b>Not Found:</b> No ROA exists for that prefix. (Result: Accept it, but often with a lower preference)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the ultimate operational goal of RPKI deployment?", a: "To move the entire internet from a state of 'Not Found' to 'Valid' and to strictly enforce the 'Drop Invalid' policy to proactively block hijacks." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How should a router handle an RPKI repository outage?", a: "The standard practice is to <b>'Fail Open.'</b> If the external repository is unreachable, the router reverts 'Invalid' or 'Valid' states back to 'Not Found.' Failing closed would cause a self-inflicted Denial of Service by dropping legitimate traffic." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is MANRS and why is coordination necessary?", a: "<b>MANRS (Mutually Agreed Norms for Routing Security)</b> is a global initiative for collective responsibility. Because BGP has a massive 'blast radius,' coordination (like keeping contact info updated in <b>PeeringDB</b>) ensures engineers can quickly call each other to stop a live hijack." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Herd Immunity' concept in routing security?", a: "Routing security only works if the majority adopts it. A single insecure network can still propagate a leak that affects everyone; we are only as secure as the weakest network in the routing path." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the major limitation of RPKI?", a: "RPKI only validates the <b>Origin</b> (Who started the route?). It does <b>not</b> validate the <b>Path</b> (The hop-by-hop journey), leaving the network vulnerable to 'AS-Path Replay' attacks." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What does BGPsec aim to achieve?", a: "BGPsec requires every router in the chain to cryptographically sign the update. This creates an unbroken chain of custody that proves <i>how</i> the packet got there, not just who sent it." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is BGPsec adoption so slow compared to RPKI?", a: "It is <b>computationally expensive</b> to verify signatures at every hop, which slows down network convergence and requires expensive hardware upgrades. Currently, RPKI is the industry standard, while BGPsec remains a complex future goal." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is 'Resilience' considered a core security feature in the CIA Triad?", a: "Availability is a pillar of security. To an end-user, a network taken down by a physical fiber cut is indistinguishable from a malicious DDoS attack; both result in a denial of service." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the difference between Physical and Logical Path Diversity?", a: "<b>Physical Diversity:</b> Ensuring fiber cables leave a building through different conduits (e.g., North and South sides) so a single 'backhoe incident' doesn't kill all connectivity.<br><b>Logical Diversity:</b> Ensuring your two ISPs don't both rely on the same upstream dependency or the same sub-sea cable, which would create a hidden single point of failure." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does BGP facilitate 'Failure Isolation'?", a: "BGP dynamically discovers paths. If ISP A experiences a routing meltdown or a leak, BGP automatically detects the failure and shifts traffic to ISP B, routing around the problem without human intervention." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the primary security vulnerability of a Unicast model?", a: "In Unicast, one IP address maps to one physical server. If a botnet targets that specific IP with a volumetric attack, the server's bandwidth is easily overwhelmed, causing a total outage." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does Anycast function as a 'Distributed Scrubbing Center'?", a: "BGP announces the same IP prefix (e.g., a '/24') from multiple global locations simultaneously. Traffic is naturally routed to the topologically closest node. During a DDoS, the attack traffic is 'diluted' across the global fleet instead of crashing into a single data center." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the operational trade-off of using Anycast?", a: "Troubleshooting is significantly harder. Because the destination is dynamic, it is difficult for administrators to pinpoint exactly which physical server a specific user is hitting, complicating forensic analysis." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the goal of 'Blast Radius Containment' at the network edge?", a: "To ensure that if an attacker compromises an Edge Router (via a BGP exploit), they remain trapped in the DMZ. The Edge Routers (Wild West) must be physically or logically separate from Core Routers (Internal Sanctuary)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How are VRFs used to protect the Management Plane?", a: "<b>Virtual Routing and Forwarding (VRF)</b> acts like a VLAN for Layer 3. It isolates management traffic (SSH/SNMP) into a separate routing table. Even if the user data plane is flooded or compromised, the management channel remains unreachable and functional." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Golden Rule' for the Public Internet routing table?", a: "Never allow the full Public Internet routing table to leak into the Internal LAN. Strict ingress/egress filters ensure internal private addresses are never visible or routable to the public web." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the difference between the Data Plane and the Control Plane?", a: "<b>Data Plane (The Muscle):</b> Uses fast, specialized hardware (ASICs) to forward user packets.<br><b>Control Plane (The Brain):</b> Uses the relatively slow general-purpose CPU to process BGP updates, SSH logins, and keepalives." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does a volumetric attack target a router's CPU?", a: "Attackers flood the router's own interface IP with traffic (like an ICMP flood). While the ASICs could forward this traffic, the CPU must process it, causing it to become overwhelmed and drop critical BGP keepalives, which disconnects the router." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does Control Plane Policing (CoPP) defend the 'Brain'?", a: "CoPP applies a QoS policy to the CPU. It rate-limits non-essential traffic (e.g., ICMP to 10 pps) while guaranteeing bandwidth for essential traffic (e.g., BGP Port 179), acting like a 'VIP rope' that protects the bouncer from the crowd." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What are the best practices for Access Control on routing infrastructure?", a: "<b>MFA:</b> Require multi-factor authentication for all privileged access.<br><b>Jump Box:</b> Prohibit direct SSH from the internet; engineers must use a Bastion Host to buffer management traffic." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does 'Infrastructure as Code' (IaC) prevent routing incidents?", a: "By treating configurations like software (stored in Git), organizations can enforce <b>peer review</b> and automated testing. This eliminates 'fat finger' errors and route leaks by ensuring changes are validated before deployment." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is an 'Out-of-Band' (OOB) network necessary for incident response?", a: "It provides a 'back door' via physically separate cables. If the production network is melting down due to a DDoS, in-band SSH will fail. OOB ensures administrators can still reach the console port to apply emergency filters." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Golden Rule' of secure DNS architecture?", a: "Never mix roles. Authoritative servers and Recursive Resolvers must reside on separate hardware to prevent creating <b>Open Resolvers</b> that can be weaponized in amplification attacks." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is a Response Policy Zone (RPZ)?", a: "RPZ turns DNS into a 'Firewall.' It allows administrators to block or redirect queries for known phishing or malware domains at the resolution level, stopping the threat before a connection is even established." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does 'DNS Sinkholing' aid in forensic identification?", a: "Instead of dropping a malicious query, the resolver 'lies' and returns the IP of a local sensor. When the infected device tries to connect to the sensor, the security team can instantly identify which specific machine is compromised." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How can Zone Transfers (AXFR) be protected from reconnaissance?", a: "Attackers use AXFR to download the map of your entire network. This must be secured using <b>TSIG keys</b> (cryptographic signatures) and <b>Access Control Lists (ACLs)</b> to ensure only authorized secondary servers can receive the data." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Golden Rule' of DNS role separation?", a: "Never mix <b>Authoritative Servers</b> (which answer for your own domains to the world) with <b>Recursive Resolvers</b> (which find external IPs for your employees)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the risk of running an 'Open Resolver'?", a: "If a server answers recursive queries for anyone on the internet, attackers can use it for <b>DDoS Amplification</b>. They spoof a victim's IP, send a small query to your resolver, and your server sends a massive response to the victim, making you an unwitting accomplice." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How do Access Control Lists (ACLs) prevent DNS abuse?", a: "You must restrict Recursive Resolvers to accept queries <b>only from internal subnets</b> (e.g., 10.0.0.0/8). Any query from the public internet should be dropped or refused to prevent mapping your internal network or launching attacks." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why treat DNS servers like Mail Servers?", a: "Just as you wouldn't allow the internet to use your mail server as an 'open relay' for spam, you must not allow them to use your DNS as an 'open resolver' for DoS traffic." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does a Response Policy Zone (RPZ) turn DNS into a firewall?", a: "RPZ is a standard that allows you to subscribe to 'Blocklists' (like antivirus updates). The DNS server checks every query against this zone file; if a match is found, it can block the request or redirect it." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What are the common triggers and actions in an RPZ policy?", a: "<b>Triggers:</b> It can trigger based on the <b>QNAME</b> (malicious domain), <b>Client-IP</b> (the infected host), or <b>RPZ-IP</b> (the malicious destination IP).<br><b>Actions:</b> It can return <b>NXDOMAIN</b> (to block the connection) or a <b>CNAME</b> (to redirect the user to a secure sinkhole)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is Rate Limiting necessary for internal DNS health?", a: "It protects the server from being overwhelmed by infected internal hosts that might be performing brute-force scanning or participating in a DoS, ensuring availability for legitimate users." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the architectural advantage of Sinkholing over simple blocking?", a: "Simple blocking (NXDOMAIN) results in a 'silent fail' for malware. <b>Sinkholing</b> redirects the malware to a server you control (e.g., 192.168.100.100). This lets you identify exactly which laptop is infected (Attribution) and capture the payload (Intent)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How do Intelligence Feeds provide 'Herd Immunity'?", a: "By using feeds like Spamhaus to populate your RPZ via <b>Zone Transfers</b>, your network stays updated automatically. If a new C2 domain is spotted in Europe, your network in Asia blocks it instantly." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the vulnerability associated with AXFR (Full Zone Transfer)?", a: "By default, many DNS servers will give their entire database to anyone who asks. An attacker using <code>dig axfr</code> can get a complete map of every internal server and 'secret' project subdomain." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How do you secure the DNS 'Map' from reconnaissance?", a: "<b>IP Restriction:</b> Limit transfers strictly to known Secondary Nameserver IPs.<br><b>TSIG (Transaction Signature):</b> Use cryptographic keys to authenticate the transfer, ensuring even a spoofed IP cannot download your zone data." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is 'Domain Shadowing' and why is it hard to detect?", a: "Attackers hack your registrar account (e.g., GoDaddy) instead of your server. They create thousands of subdomains (e.g., login.pizza.com) that point to their malicious sites. Since your main site stays up, it doesn't trigger usual alarms." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What are the three layers of defense for a Registrar account?", a: "<b>Layer 1 (MFA):</b> Enforce Multi-Factor Authentication on all accounts.<br><b>Layer 2 (Registry Lock):</b> Prevents unauthorized changes to NS records without out-of-band verification.<br><b>Layer 3 (Monitoring):</b> Use <b>Certificate Transparency (CT)</b> logs to get alerts whenever a new SSL certificate is issued for your domain." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is 'Pass/Fail' logging insufficient for DNS forensics?", a: "You need metadata to detect advanced threats. <b>Query Type</b> can reveal tunneling (excessive TXT records), <b>Query Length</b> can reveal exfiltration (200+ character subdomains), and the <b>Answer</b> can reveal Fast-Flux (rotating IPs)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Gold Standard' for DNS logging?", a: "<b>Zeek (formerly Bro) dns.log</b> is the preferred source because it creates a structured, protocol-aware log of every query and response." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why are logs described as 'Time Machines'?", a: "Dwell time (the gap between infection and detection) is often months. You need at least 90 days of logs to find 'Patient Zero' and understand how the breach started." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What does DNSSEC protect, and what does it NOT protect?", a: "<b>Protects (Integrity):</b> It uses cryptographic signatures to prove a response came from the real owner and wasn't modified in transit.<br><b>Does NOT Protect (Privacy):</b> DNSSEC does not encrypt traffic. An attacker can still see where you are going. (Privacy requires DoH or DoT)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Explain the 'Envelope Analogy' for DNS security.", a: "<b>DNSSEC</b> is the <b>wax seal</b> on the envelope; it proves the letter hasn't been tampered with.<br><b>TLS/DoH/DoT</b> is the <b>locked briefcase</b>; it ensures no one can see who you are writing to or read the contents." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the design challenge DNSSEC solves with 'Split Keys'?", a: "Signing every record with a massive, high-security key is computationally slow and creates massive network packets. The solution is to use two different keys with different roles." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Zone Signing Key (ZSK):", a: "The 'workhorse' key. It is smaller and faster, used to sign the actual zone data (A, MX records). Because it is smaller, it is rotated frequently (e.g., monthly) to limit exposure." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Key Signing Key (KSK):", a: "The 'supervisory' key. It is larger and stronger, used <b>only</b> to sign the ZSK. Because it is used rarely, it can be computationally 'heavy.' It is rotated rarely (e.g., yearly)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Administrative Benefit:", a: "This split allows you to rotate your ZSK locally as much as you want without involving the parent Registrar. You only need to update the <b>DS Record</b> at the Registrar when you change the KSK." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does a resolver verify a signature?", a: "It traces a path of trust from the record up to the <b>Root (.)</b>. The Root signs the TLD (.com), the TLD signs the Domain (example.com) via a <b>DS Record</b>, and the Domain signs the final record (www)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the Delegation Signer (DS) Record?", a: "It is the 'cryptographic glue.' It lives in the parent zone and contains a hash (fingerprint) of the child's KSK. This proves the parent vouches for the child's keys." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Trust Anchor'?", a: "The <b>Root Key</b> managed by ICANN. It is the starting point of trust and is hardcoded into almost every DNS server and validator in the world." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Hard Fail' risk in DNSSEC?", a: "In standard DNS, a typo might cause a minor glitch. In DNSSEC, any signature mismatch or expired key causes a <b>SERVFAIL</b>. To the user, the site is 'Down,' even if the web server is perfectly healthy." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Common Causes of Outages:", a: "<b>Clock Skew:</b> If a router's time is off (NTP failure), it might think a valid signature has expired or isn't valid yet.<br><b>Expired RRSIGs:</b> Signatures have a lifespan (e.g., 10 days). If automation fails to re-sign the zone, the site disappears from the internet.<br><b>Broken DS Link:</b> Changing your KSK but forgetting to upload the new hash to your Registrar breaks the chain of trust." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why treat BGP like a 'Heartbeat'?", a: "BGP should be stable. Sudden spikes in route counts or rapid session resets (flapping) are 'cardiac events' indicating a route leak, hijack, or a physical MTU issue." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How to spot a Route Leak vs. a Hijack?", a: "<b>Route Leak:</b> A neighbor suddenly sends 5,000 routes instead of 50. This usually indicates an accidental misconfiguration where they've become an unintentional transit provider.<br><b>Hijack:</b> Your traffic to a known provider (Level3) suddenly detours through an unknown ASN in a different country (e.g., Russia). This suggests a malicious attempt to intercept data." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What causes BGP 'Session Flaps'?", a: "Often caused by a volumetric attack exhausting the router's CPU (Control Plane) or an MTU mismatch that drops larger BGP update packets, causing the hold timer to expire." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Internal Blind Spot'?", a: "Your internal logs only show traffic <b>leaving</b> your border. They cannot see if your traffic is being hijacked or blackholed three hops away in a different country." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How to achieve External Visibility:", a: "<b>Looking Glasses:</b> Global servers that allow you to run a traceroute <i>back</i> to your own network to see what the world sees.<br><b>BGPStream:</b> A real-time monitoring service that alerts you when unauthorized ASNs start advertising your IP space." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is BGP called the 'Kill Switch' for an enterprise?", a: "As seen in the 2021 Facebook outage, a BGP error that withdraws routes to your DNS servers makes your entire company vanish. If the 'road' to your DNS is gone, no one can find your website or send you email." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Monitoring Third Parties:", a: "You must monitor the ASNs of your ISPs and Cloud Providers. If their routing breaks, your business breaks. Availability is a 'shared fate.'" },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is Mean Time to Detect (MTTD)?", a: "The time elapsed between the initial infection (<b>Patient Zero</b>) and the first security alert.<br><b>The Goal:</b> Drive this down aggressively to minimize 'Dwell Time' (the period an attacker remains undiscovered)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How can 'Rare Domains' be used to lower MTTD?", a: "By establishing a baseline of normal DNS traffic and flagging statistical anomalies, such as high-entropy hostnames generated by <b>Domain Generation Algorithms (DGAs)</b>." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why did the SolarWinds (SUNBURST) attack have such a high MTTD?", a: "The attackers used 'slow' beaconing that blended into normal network noise, staying below the threshold of volumetric alerts for months." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is Mean Time to Respond (MTTR)?", a: "The time between the generation of an alert and the <b>containment</b> of the threat (e.g., pushing a block to an RPZ or isolating a host)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is 'Coverage' considered a prerequisite for these metrics?", a: "Metrics are deceptive if you only monitor a fraction of the estate. If <b>Zeek</b> only monitors 70% of the network, the remaining 30% has an effectively infinite dwell time." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Feedback Loop' in a modern SOC?", a: "The automated connection between the <b>'Eyes'</b> (detection tools like Zeek) and the <b>'Hands'</b> (enforcement points like DNS Firewalls or Routers)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the automated workflow for neutralizing a C2 threat?", a: "1. <b>Detection:</b> Zeek identifies a DGA or beaconing pattern.<br>2. <b>Verification:</b> An analyst or SOAR platform confirms the indicator.<br>3. <b>Distribution:</b> The threat is pushed to an intelligence platform (MISP).<br>4. <b>Enforcement:</b> The domain is added to the <b>DNS RPZ</b>, instantly blocking it for the entire organization." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does RITA (Real Intelligence Threat Analytics) detect hidden C2?", a: "It analyzes Zeek logs for <b>timing consistency</b> (heartbeats) and connection duration rather than signatures, catching subtle beacons that evade traditional firewalls." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the role of Security Onion in this stack?", a: "It serves as the central hub, bundling <b>Zeek</b> (for metadata), <b>Suricata</b> (for signatures), and the <b>Elastic Stack</b> (for log visualization)." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is DNS considered 'Layer 7 on top of Layer 3'?", a: "DNS is an application protocol. If the underlying <b>BGP routes</b> (Layer 3) are broken or withdrawn, the DNS packets (Layer 7) can never reach the server, even if the DNS software is healthy." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does a BGP Route Leak cause a 'Black Hole'?", a: "An ISP accidentally advertises a more specific path to your nameserver's IP. The internet's traffic is diverted to the misconfigured ISP, which silently discards the packets." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the troubleshooting 'Red Herring' in a routing-based DNS failure?", a: "The DNS server's local logs will show <b>zero errors</b> because the requests never arrive. The server is 'up,' but the service is globally unavailable." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How does an attacker use BGP to impersonate a domain?", a: "<b>The Hijack:</b> An attacker advertises your DNS server's IP prefix as their own.<br><b>The Fake Server:</b> They spin up a rogue DNS server on that hijacked IP.<br><b>The Lie:</b> Their server answers queries for bank.com with a phishing IP." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why do standard DNS clients fall for BGP-based impersonation?", a: "They trust the <b>path</b>, not the data. If the network says 'this IP is the destination,' the client believes it is talking to the legitimate owner." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is DNSSEC the only effective defense against BGP hijacks?", a: "DNSSEC validates the <b>data</b>, not the path. Even if an attacker hijacks the IP, they don't have the private <b>ZSK/KSK</b> keys to sign the fake response. The resolver will see the invalid signature and drop the answer." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "How is Anycast 'weaponized' through routing policy?", a: "By manipulating BGP attributes (like <b>AS-Path Prepending</b>), an attacker can force global traffic meant for 50 nodes to converge on a single, small node." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the dual impact of Anycast manipulation?", a: "1. <b>Overload:</b> The targeted node is crushed by the volume (DDoS via routing).<br>2. <b>Latency:</b> Users are routed to topologically distant servers (e.g., New York to Sydney), destroying performance." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Multi-Tenancy Risk' in Cloud DNS?", a: "You share the same nameserver IPs with thousands of other customers. If a fellow tenant is DDoSed, the shared infrastructure may degrade, causing <b>collateral damage</b> to your resolution times." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What does it mean to 'Outsource the Routing Risk'?", a: "When using Cloud DNS, you rely entirely on the provider's BGP security. If their BGP is hijacked, your DNS is hijacked, and you have no direct control to fix the routing table." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the 'Dependency Deadlock' in a combined failure?", a: "A BGP hijack occurs during a <b>DNSSEC Key Rollover</b>." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "Why is this scenario so difficult to recover from?", a: "The domain goes 'Bogus' globally because the new <b>DS Record</b> can't be uploaded to the registrar (path is hijacked).<br><b>The Trap:</b> You cannot fix the DNS (Layer 7) until you fix the Routing (Layer 3), but you often need the Management Plane (which may rely on DNS) to coordinate the fix." },
+  { module: "Week 10: Module 3 : Risk Reduction and Engineering Controls", q: "What is the primary lesson for engineers?", a: "Recovery requires rebuilding the 'road' (Layer 3) before you can touch the 'server' (Layer 7). These cascading failures are why major platform outages often last for days." },
+    // Module 4 : Cloud Implications
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does 'Cloud Routing' differ from traditional networking?", a: "In the cloud, physical hardware is replaced by software abstractions: a <b>VPC Route Table</b> acts as the 'Router,' and services like <b>Direct Connect</b> or <b>ExpressRoute</b> act as the 'Cables' extending your trust boundary." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What are the main limitations of Managed DNS (e.g., Route 53)?", a: "<b>No 'Root' Visibility:</b> You cannot see raw query logs by default; they are often a premium, paid feature.<br><b>Shared Fate:</b> You share nameserver IPs with thousands of other tenants. A DDoS attack on a 'noisy neighbor' can degrade your resolution speed." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Split Brain' DNS problem in hybrid environments?", a: "It occurs when on-prem servers need to resolve cloud names (e.g., app.aws.corp) and cloud instances need to resolve on-prem names (e.g., intranet.corp)." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do 'Resolver Endpoints' bridge the hybrid gap?", a: "<b>Inbound Endpoints:</b> Allow on-prem servers to query Cloud DNS.<br><b>Outbound Endpoints:</b> Allow cloud resources to query on-prem DNS via conditional forwarders over a VPN or Direct Connect." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Why is VPC Peering a risk for 'Lateral Movement'?", a: "Peering creates a private route between VPCs. If an attacker compromises a <b>Dev VPC</b>, they can use that peer route to move 'behind enemy lines' and attack <b>Prod databases</b> without hitting a perimeter firewall." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the security risk of a Transit Gateway (TGW)?", a: "If not segmented with isolated Route Tables, a TGW can 'flatten' the network, allowing malware to spread from one 'spoke' VPC to all others connected to the hub." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is 'Subdomain Takeover' (Dangling CNAMEs)?", a: "It occurs when you delete a cloud resource (like an S3 bucket or EC2 instance) but <b>forget to delete the DNS record</b> pointing to it. An attacker can claim that same resource name in their own account, effectively taking over your subdomain." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does the 'Shared Responsibility Model' apply to routing?", a: "<b>The Provider:</b> Secures the physical data center and the BGP advertisements to the Region.<br><b>The User:</b> Must secure the internal <b>VPC Route Tables</b> and maintain DNS hygiene (deleting orphaned records). AWS will <b>not</b> automatically delete a CNAME when you terminate an instance." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is 'SaaS Dependency Mapping'?", a: "Identifying every external API (e.g., Stripe, Twilio) your app calls. If their DNS provider (e.g., Dyn) goes down, your app crashes because it cannot resolve the API endpoint." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Why is hard-coding IP addresses a poor mitigation for DNS failure?", a: "Cloud and CDN IPs are <b>dynamic</b>. If the provider rotates their IP for security or scaling, your app will break because it is holding a 'stale' address." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you replace physical 'TAPs' in the cloud?", a: "Since you can't tap a virtual cable, you must enable <b>Route 53 Query Logs</b> (for public traffic) and <b>VPC Flow Logs</b> (for network metadata) to gain visibility." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What can you detect by analyzing Route 53 Query Logs?", a: "You can identify <b>DNS Tunneling</b> (encoded data in queries) or <b>C2 beaconing</b> happening from within your private VPC." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How is a 'Router' defined in the cloud?", a: "It is a <b>virtual software construct</b> (Software-Defined Networking), not a physical box. You manage traffic by customizing <b>VPC Route Tables</b> rather than moving cables." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What determines if a subnet is 'Public' or 'Private'?", a: "<b>Public Subnet:</b> Its route table has an entry sending internet-bound traffic (0.0.0.0/0) to an <b>Internet Gateway (IGW)</b>.<br><b>Private Subnet:</b> It lacks a direct route to an IGW. To reach the internet (e.g., for patches), it must route through a <b>NAT Gateway</b> (outbound only) or a <b>Virtual Private Gateway (VGW)</b> for VPN traffic." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Trust Boundary Risk' of Direct Connect or ExpressRoute?", a: "These are physical fiber links that bypass the public internet. By connecting your on-prem data center directly to the cloud, you extend your <b>internal network perimeter</b>.<br><b>The Danger:</b> If a cloud instance is compromised, the attacker can move laterally across this 'trusted' link to infect your core on-prem servers. You must place firewalls at the termination points." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is a 'Dangling CNAME'?", a: "A DNS record (e.g., app.corp.com) that points to a cloud resource (e.g., an S3 bucket) that has been <b>deleted</b>, but the DNS record itself was forgotten." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does an attacker exploit this?", a: "1. The attacker finds your 'dangling' record pointing to bucket-123.s3.amazonaws.com.<br>2. Since the bucket name is now available in the global pool, the attacker creates a new bucket with that <b>exact name</b> in their own account.<br>3. Your legitimate domain now serves the attacker's phishing pages or malware." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Why is this so effective for phishing?", a: "It bypasses reputation filters. The malicious content is served from your own <b>trusted, high-reputation corporate domain</b>." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Why is 'pcap' (packet capture) difficult in the cloud?", a: "You can't physically 'tap' a virtual wire in a multi-tenant environment. Instead, you must rely on <b>Service Logs</b> generated by the provider." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What do Route 53 Query Logs tell you?", a: "They provide a 'phone log' of your VPC: <b>Timestamp</b>, <b>Source IP</b> (the specific instance making the request), <b>Query Name</b> (the domain), and the <b>Response</b>." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do these logs detect 'DNS Tunneling'?", a: "By monitoring for <b>unusually long queries</b> or high frequency to a single domain. Attackers use DNS as a transport protocol to exfiltrate data since it's often allowed through firewalls by default." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does MAS TRM (Singapore) view DNS/BGP issues?", a: "Regulators focus on <b>Availability</b>. They don't care about the technical 'why' (e.g., RPKI failure); they care if a banking service is down. Uptime mandates translate directly into requirements for redundancy." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you translate a 'BGP Route Leak' for the Board of Directors?", a: "You don't describe prefix counts; you describe <b>Revenue Loss</b>, <b>Brand Damage</b>, and <b>Customer Churn</b>." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Fail Open' vs. 'Fail Closed' debate?", a: "<b>Engineering Ideal:</b> Fail closed (block traffic if security validation fails).<br><b>Risk Appetite:</b> A business might choose to 'Fail Open' (allow unverified traffic) during a crisis to maintain service availability, accepting the security risk to avoid an outage." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is 'Systemic Risk' in networking?", a: "The internet is a shared ecosystem. A failure in a major ISP's BGP (Third-Party Exposure) becomes <b>your</b> critical risk. You must treat the internet as a hostile, contested environment." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do regulators (like MAS) view network configuration?", a: "They focus on <b>outcomes (Uptime)</b> rather than specific settings. In the CIA triad, <b>Availability</b> is a mandate; a BGP error that takes down a service is a regulatory breach regardless of the intent." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the difference between Redundancy and High Availability (HA)?", a: "<b>Redundancy:</b> Having two of the same device.<br><b>High Availability:</b> Architectural resilience including <b>Path Diversity</b> and <b>Dependency Management</b> to ensure no single point of failure (e.g., using multiple upstream ISPs)." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does BGP act as a 'Kill Switch'?", a: "As seen in the <b>2021 Facebook Outage</b>, a single BGP configuration error can withdraw all routes, effectively erasing a company from the internet and even locking engineers out of physical management systems." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the technical solution for 'Resilience' at the routing layer?", a: "<b>Anycast:</b> A single IP address is announced from multiple global locations. If one node fails, BGP automatically reroutes users to the next closest healthy node." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Identify (Asset Management):\n- Question: Do you know every external IP and domain you own?\n- Risk: Failing to identify 'Dangling CNAMEs' leads to Subdomain Hijacking.", a: "<b>Question:</b> Do you know every external IP and domain you own?<br><b>Risk:</b> Failing to identify 'Dangling CNAMEs' leads to <b>Subdomain Hijacking</b>." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Protect (Access Control):\n- Controls: Implementing RPKI to cryptographically sign route advertisements and enforcing MFA on Domain Registrar accounts to prevent unauthorized transfers.", a: "<b>Controls:</b> Implementing <b>RPKI</b> to cryptographically sign route advertisements and enforcing <b>MFA</b> on Domain Registrar accounts to prevent unauthorized transfers." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Detect (Continuous Monitoring):\n- Tools: Using Looking Glasses and BGPStream to observe how the outside world sees your routes, detecting hijacks that internal logs might miss.", a: "<b>Tools:</b> Using <b>Looking Glasses</b> and <b>BGPStream</b> to observe how the outside world sees your routes, detecting hijacks that internal logs might miss." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Respond (Mitigation):\n- Playbook: Using DNS Sinkholing to point infected internal hosts to a non-routable address (0.0.0.0), severing their connection to C2 servers.", a: "<b>Playbook:</b> Using <b>DNS Sinkholing</b> to point infected internal hosts to a non-routable address (0.0.0.0), severing their connection to C2 servers." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is 'Reasonable Security' for routing?", a: "Adherence to <b>MANRS</b> (Mutually Agreed Norms for Routing Security) is increasingly used by auditors as the benchmark for a mature network security posture." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Why is the Internet considered a 'Shared Nervous System'?", a: "BGP was designed in 1989 on a <b>Handshake Trust Model</b>. It assumes all neighbors are friendly, meaning your security depends on the hygiene of every other ISP on the path." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does a 'Cascading Failure' occur?", a: "A mistake by a small ISP (like the <b>YouTube/Pakistan</b> incident) can ripple globally if they advertise a 'more specific' (/24) route than the legitimate owner (/19), causing global traffic to pivot to the wrong destination." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is 'Third-Party Exposure' in DNS?", a: "If you outsource DNS to a cloud provider, you share their risk. If their BGP is hijacked, your domain is hijacked." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'ISP Trust' (Espionage) risk?", a: "Hostile actors can manipulate BGP to 'detour' your traffic through their country (e.g., <b>China Telecom detour</b>) to sniff data before forwarding it to you, often without any service interruption." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you translate 'RPKI/DNSSEC' for the Board?", a: "<b>Tech:</b> 'We are signing our prefixes and zones.'<br><b>Business:</b> 'We are <b>digitally signing our network address</b> to prevent fraudsters from impersonating our brand and stealing customer funds.'" },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you translate 'DoH/RPZ' for the Board?", a: "<b>Tech:</b> 'We need to block DNS over HTTPS.'<br><b>Business:</b> 'We need to ensure our <b>security cameras (logs)</b> aren't blinded by encrypted traffic so we can catch ransomware before it locks our files.'" },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What are the three 'Board-level' metrics?", a: "<b>Revenue</b> (Loss from downtime), <b>Reputation</b> (Brand damage from phishing), and <b>Regulation</b> (Fines for non-compliance)." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "The 'Allow List' vs. 'Deny List' Dilemma:", a: "<b>Ideal:</b> Block everything except 'known good' (Allow List).<br><b>Reality:</b> The modern web is too complex (CDNs/Ads). Most organizations accept the risk of a <b>Deny List (RPZ)</b> because an Allow List would break daily business operations." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Failing 'Open' vs. 'Closed':", a: "<b>Fail Closed:</b> If a security check (like RPKI) fails, drop the traffic. (High Security).<br><b>Fail Open:</b> If a check fails, allow the traffic to ensure the site stays up. (High Availability).<br><b>Decision:</b> Most businesses <b>Fail Open</b> initially to prioritize uptime, moving toward 'Fail Closed' only as their security maturity grows." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Outside-In' view in routing triage?", a: "Internal logs only show what <i>reaches</i> you. To diagnose an outage, you must use <b>Looking Glasses</b> (e.g., Hurricane Electric) to see if the global internet is rejecting your routes or if an unauthorized AS has hijacked them." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you 'fight routing with routing' during a BGP hijack?", a: "<b>The Attack:</b> A hijacker announces your /22 block.<br><b>The Counter-Move:</b> You announce more specific prefixes (four /24s).<br><b>The Result:</b> Because routers prefer the <b>Longest Prefix Match</b>, global traffic will immediately prefer your /24s over the hijacker's /22, forcing traffic back to your infrastructure." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Scenario A: Cache Poisoning\n- Symptom: Users are redirected to a fake/phishing site.\n- Action: Immediately Flush the Cache (rndc flush for BIND or ipconfig /flushdns for Windows).\n- Hardening: Enable DNSSEC to cryptographically sign records and prevent re-poisoning.", a: "<b>Symptom:</b> Users are redirected to a fake/phishing site.<br><b>Action:</b> Immediately <b>Flush the Cache</b> (rndc flush for BIND or ipconfig /flushdns for Windows).<br><b>Hardening:</b> Enable <b>DNSSEC</b> to cryptographically sign records and prevent re-poisoning." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Scenario B: Malware C2 (Beaconing)\n- Symptom: Zeek/Network monitoring detects high-entropy DGA domains.\n- Action: Sinkhole the domain via RPZ.\n- Outcome: This severs the C2 link and forces the infected host to connect to an internal IP (e.g., 10.10.10.10), making it easy to identify the compromised machine.", a: "<b>Symptom:</b> Zeek/Network monitoring detects high-entropy DGA domains.<br><b>Action:</b> <b>Sinkhole</b> the domain via <b>RPZ</b>.<br><b>Outcome:</b> This severs the C2 link and forces the infected host to connect to an internal IP (e.g., 10.10.10.10), making it easy to identify the compromised machine." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Why is PeeringDB critical for incident response?", a: "It is the industry directory for <b>NOC (Network Operations Center)</b> contacts. You cannot fix a BGP hijack alone; you need to call the ISP or the offending AS to request a teardown." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What was the 'Facebook Lesson' regarding dependencies?", a: "In 2021, when Facebook's BGP routes were withdrawn, their internal tools (email, Slack, and even physical badge readers) failed because they ran on the same network.<br><b>The Fix:</b> Maintain <b>Out-of-Band (OOB)</b> communication (e.g., Signal, LTE hotspots) that does not depend on corporate DNS or routing." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you translate a 'Route Leak' for stakeholders?", a: "<b>Technical:</b> 'An upstream AS is leaked a more specific prefix.'<br><b>Business:</b> 'The <b>map of the internet is broken</b>, and traffic cannot find our digital building.'" },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you verify a fix is permanent?", a: "Use Looking Glasses to run traceroutes from multiple continents (London, Tokyo, NY).<br><b>The Audit:</b> Confirm the AS_PATH is 'clean' and no longer detours through an unauthorized or hostile Autonomous System." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What 'Secrets' must be rotated after a breach?", a: "1. <b>Registrar Passwords:</b> To prevent unauthorized Name Server (NS) changes.<br>2. <b>DNSSEC Keys (KSK/ZSK):</b> To ensure attackers cannot sign malicious records using old keys.<br>3. <b>BGP MD5/TCP-AO Passwords:</b> To re-authenticate peering sessions with upstream providers." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you 'close the loop' after an incident?", a: "Feed incident data back into <b>RPKI policies</b> to automate route validation.<br>Update <b>Zeek/Suricata</b> filters with the newly discovered IOCs (Indicators of Compromise).<br>Document 'Risk Decisions' where you chose to Fail Open vs. Fail Closed to refine future response speed." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Feedback Cycle' in incident response?", a: "It is the transition from reactive firefighting to proactive resilience. Every incident must update the defense logic—identifying if a failure was due to policy or technology gaps to prevent recurrence." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you improve BGP security after a hijack?", a: "Move from 'monitoring' RPKI status to enforcing a <b>'Drop Invalid'</b> policy. This ensures the router automatically rejects unauthorized route advertisements instead of just logging them." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do you tune DNS detection after a tunneling incident?", a: "Analyze why tools like <b>Zeek</b> missed the exfiltration. Often, this requires lowering the <b>query length threshold</b> or monitoring for high-entropy TXT records, which attackers use to carry larger data payloads." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How is threat intelligence operationalized via RPZ?", a: "New C2 domains found during a hunt are fed into the <b>Response Policy Zone (RPZ)</b>. This 'DNS Firewall' then intercepts any future requests to those domains, effectively inoculating the rest of the network." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "Why is global RPKI adoption not at 100%?", a: "<b>The 'Fail Closed' Fear:</b> Operators worry that misconfigurations (like the Vodafone 30k prefix leak) will lead to dropping legitimate traffic, causing a self-inflicted DoS.<br><b>Legacy Gear:</b> Older routers lack the specialized hardware (ASICs) to perform cryptographic signature validation at line rate without crashing." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is 'State-Level Routing Interference'?", a: "Nation-states use BGP for <b>Espionage</b> rather than disruption. Instead of 'Blackholing' traffic, they use <b>Route Leaks</b> to silently detour data through their infrastructure (e.g., the <b>China Telecom</b> case) for inspection before forwarding it." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the risk of 'Sovereign Internet' initiatives?", a: "Countries are building 'Walled Gardens' and private routing tables to ensure data sovereignty. This leads to <b>Geopolitical Fragmentation</b>, making global routing more complex and less transparent." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does DNS over HTTPS (DoH) create a 'Blindfold' for the SOC?", a: "<b>Privacy Benefit:</b> It encrypts queries so ISPs and governments cannot spy on users.<br><b>Security Cost:</b> It hides DNS traffic inside standard <b>HTTPS (Port 443)</b>. The SOC can no longer see dns.log data, making it impossible to detect DGAs or C2 beaconing." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does Malware exploit DoH?", a: "If malware queries a public DoH resolver (like Google's 8.8.8.8), the firewall only sees generic encrypted web traffic to Google, not the malicious domain query hidden inside." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the Enterprise Defense Strategy for DoH?", a: "<b>Block Known Resolvers:</b> Block access to public DoH providers at the network edge and block <b>Port 853 (DoT)</b>.<br><b>Force Fallback:</b> This forces clients (and some malware) to 'fall back' to the internal, unencrypted DNS servers that the organization can monitor and sinkhole." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Too Big to Fail' problem in DNS?", a: "As seen with the <b>2021 Facebook Outage</b>, relying on a few centralized providers means a single BGP error can instantly erase the digital presence of billions of users." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How is AI changing the 'Speed of the Fight'?", a: "Attackers use <b>Domain Generation Algorithms (DGA)</b> to create thousands of domains in seconds.<br><b>Defense:</b> Organizations must use AI-driven tools (like <b>RITA</b>) to automate the hunt and match the speed of machine-generated attacks." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Too Big to Fail' risk in DNS?", a: "The internet's control plane is concentrated among a few giants (Cloudflare, AWS, Akamai). A single bad update or BGP error (like the <b>2021 Facebook</b> or <b>2017 AWS S3</b> incidents) can cause a 'cascading failure' where billions of users lose access to major services simultaneously." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does 'Shared Infrastructure' lead to collateral damage?", a: "In a multi-tenant Anycast environment, a volumetric DDoS attack targeting one customer (a 'noisy neighbor') can saturate the node, degrading performance for all other legitimate customers sharing that infrastructure." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the 'Splinternet' (Geopolitical Fragmentation)?", a: "The shift from a borderless internet to <b>'Walled Gardens'</b> defined by national borders. Countries now mandate specific BGP paths to avoid 'hostile' nations and pass <b>Data Sovereignty</b> laws requiring local storage and DNS resolution (e.g., GDPR, Saudi PDPL)." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How has the role of the Network Architect changed?", a: "Architects must now design for <b>Legal Compliance</b> over technical efficiency. Routing decisions (e.g., geo-fencing or using private Cloud Exchanges) are often dictated by where data is legally allowed to travel, rather than the lowest latency path." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How does RITA automate the hunt for C2 Beacons?", a: "<b>Real Intelligence Threat Analytics (RITA)</b> analyzes Zeek logs using statistical models (like <b>Bowley Skewness</b> and <b>Median Absolute Deviation</b>) to find the 'heartbeat' of a beacon. It ignores the content (payload) and focuses purely on the timing and consistency of connections." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "How do attackers bypass traditional DGA detection in 2026?", a: "<b>The Old Way:</b> Detect 'high entropy' (random strings like xyqz123.com).<br><b>The AI Way:</b> Use Generative AI to create <b>'Human-like' domains</b> using dictionary words (e.g., legit-marketing-portal.com). These pass entropy checks and blend into normal web traffic." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is 'Automated Response' in this context?", a: "Connecting detection (Zeek) directly to enforcement (RPZ or BGP). If a machine-speed attack is detected, the system injects a sinkhole record or a routing filter in <b>seconds</b>, long before a human analyst could react." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What defines the future 'Machine vs. Machine' warfare?", a: "A state where human reaction time is the bottleneck. Defensive algorithms must autonomously fight offensive agents over routing updates and DNS queries at wire speed to maintain network integrity." },
+    { module: "Week 10: Module 4 : Cloud Implications", q: "What is the existential risk to our connectivity in the next 5 years?", a: "It is the convergence of <b>Systemic Centralization</b> (one provider failing) and <b>AI-Driven Industrialization</b> of attacks. We must move from static, manual 'Firewalls' to <b>Autonomous Behavioral Defense</b> and <b>Multi-Cloud Diversity</b>." },
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let CARDS_RAW = [...SEED];
+let chapters  = {};
+let deck = [], currentIdx = 0;
+let correctSet = new Set(), wrongSet = new Set();
+let revealed = false, currentModule = 'all', currentMode = 'all';
+let pendingCards = [];
+
+SEED.forEach(c => { if (!chapters[c.module]) chapters[c.module] = []; chapters[c.module].push(c); });
+
+// ═══════════════════════════════════════════
+// DRAWER
+// ═══════════════════════════════════════════
+function openDrawer() {
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('chapterName').value = '';
+  document.getElementById('chapterText').value = '';
+  hideError(); hidePreview(); hideStatus();
+  document.getElementById('parseBtn').disabled = false;
+  document.getElementById('parseBtnText').textContent = '✦ Extract Flashcards with AI';
+  renderChapterManager();
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeDrawerIfOutside(e) {
+  if (e.target === document.getElementById('drawerOverlay')) closeDrawer();
+}
+function showError(msg) { const el = document.getElementById('errorMsg'); el.textContent = msg; el.classList.add('visible'); }
+function hideError()    { document.getElementById('errorMsg').classList.remove('visible'); }
+function hidePreview()  { document.getElementById('previewSection').classList.remove('visible'); pendingCards = []; }
+function hideStatus()   { document.getElementById('parseStatus').classList.remove('visible'); }
+function showStatus(msg){ document.getElementById('parseStatus').classList.add('visible'); document.getElementById('parseStatusText').textContent = msg; }
+
+// ═══════════════════════════════════════════
+// AI PARSE
+// ═══════════════════════════════════════════
+async function parseChapter() {
+  const name = document.getElementById('chapterName').value.trim();
+  const text = document.getElementById('chapterText').value.trim();
+  hideError(); hidePreview();
+  if (!name) { showError('Please give this chapter a name first.'); return; }
+  if (text.length < 30) { showError('Please paste some notes — the more content, the better the cards.'); return; }
+
+  document.getElementById('parseBtn').disabled = true;
+  document.getElementById('parseBtnText').textContent = 'Extracting...';
+  showStatus('Sending notes to Claude...');
+
+  const systemPrompt = `You are a flashcard extraction engine. Given raw study notes in any format (bullet points, sub-bullets, tables, paragraphs), extract clear question-answer pairs for revision flashcards.
+
+Rules:
+- Each top-level bullet, heading, or concept becomes a QUESTION
+- Sub-bullets, explanations, and related content become the ANSWER  
+- Answers may include simple HTML: <b>bold</b> and <br> for line breaks
+- Make questions self-contained and specific
+- Make answers thorough but scannable
+- Extract 5-60 cards depending on content length
+- RESPOND ONLY WITH a raw JSON array — no markdown fences, no preamble, nothing else
+- Format exactly: [{"q":"question","a":"answer"},...]`;
+
+  try {
+    showStatus('Claude is reading your notes...');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: `Extract flashcards from these study notes:\n\n${text}` }]
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+    showStatus('Parsing extracted cards...');
+    const data = await res.json();
+    const raw = data.content.map(i => i.text || '').join('');
+    let parsed;
+    try { parsed = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch(e) { throw new Error('Could not parse the response. Try again or simplify your notes.'); }
+    if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No flashcards could be extracted. Try adding more detailed notes.');
+    pendingCards = parsed.map(c => ({ q: String(c.q||''), a: String(c.a||''), module: name })).filter(c => c.q && c.a);
+    hideStatus();
+    renderPreview();
+  } catch(err) {
+    hideStatus();
+    showError('Error: ' + err.message);
+    document.getElementById('parseBtn').disabled = false;
+    document.getElementById('parseBtnText').textContent = '✦ Extract Flashcards with AI';
+  }
+}
+
+function renderPreview() {
+  document.getElementById('previewCount').textContent = `${pendingCards.length} cards`;
+  document.getElementById('previewList').innerHTML = pendingCards.map((c,i) => `
+    <div class="preview-card" id="pc${i}">
+      <button class="preview-remove" onclick="removePending(${i})">✕</button>
+      <div class="preview-q">${c.q}</div>
+      <div class="preview-a">${c.a.replace(/<[^>]+>/g,'').slice(0,100)}${c.a.length>100?'…':''}</div>
+    </div>`).join('');
+  document.getElementById('previewSection').classList.add('visible');
+  document.getElementById('parseBtn').disabled = false;
+  document.getElementById('parseBtnText').textContent = '⟳ Re-extract';
+}
+
+function removePending(i) {
+  pendingCards.splice(i,1);
+  if (pendingCards.length === 0) { hidePreview(); return; }
+  renderPreview();
+}
+
+function confirmImport() {
+  if (!pendingCards.length) return;
+  const name = document.getElementById('chapterName').value.trim();
+  if (!chapters[name]) chapters[name] = [];
+  chapters[name].push(...pendingCards);
+  CARDS_RAW.push(...pendingCards);
+  buildModuleRow(); buildDeck(); render();
+  const n = pendingCards.length;
+  closeDrawer();
+  showToast(`✓ ${n} cards added to "${name}"`);
+}
+
+// ═══════════════════════════════════════════
+// CHAPTER MANAGER
+// ═══════════════════════════════════════════
+function renderChapterManager() {
+  const sec = document.getElementById('chaptersSection');
+  const names = Object.keys(chapters);
+  if (!names.length) { sec.innerHTML=''; return; }
+  sec.innerHTML = `<div class="chapters-label">Loaded Chapters</div><div>${
+    names.map(n=>`<span class="chapter-pill">${n} <span class="chapter-pill-count">${chapters[n].length}</span>
+      <button class="chapter-pill-del" onclick="deleteChapter(${JSON.stringify(n)})">✕</button></span>`).join('')
+  }</div>`;
+}
+
+function deleteChapter(name) {
+  if (!confirm(`Delete all ${(chapters[name]||[]).length} cards from "${name}"?`)) return;
+  CARDS_RAW = CARDS_RAW.filter(c => c.module !== name);
+  delete chapters[name];
+  correctSet = new Set(); wrongSet = new Set();
+  buildModuleRow(); buildDeck(); render(); renderChapterManager();
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 22px;border-radius:30px;font-family:Syne,sans-serif;font-weight:700;font-size:13px;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(16,185,129,0.4);transition:opacity 0.3s;';
+  t.textContent = msg; document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),300); },2500);
+}
+
+// ═══════════════════════════════════════════
+// QUIZ CORE
+// ═══════════════════════════════════════════
+function getModules() { return ['all',...new Set(CARDS_RAW.map(c=>c.module))]; }
+
+function buildDeck() {
+  let src = currentMode==='wrong' ? CARDS_RAW.filter((_,i)=>wrongSet.has(i)) : CARDS_RAW;
+  if (currentModule!=='all') src = src.filter(c=>c.module===currentModule);
+  deck = src.map(c=>({...c, origIdx:CARDS_RAW.indexOf(c)}));
+  currentIdx=0; revealed=false;
+}
+
+function shuffleDeck() {
+  for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+  currentIdx=0; revealed=false; render();
+}
+
+function setMode(m) {
+  currentMode=m;
+  document.getElementById('modeAll').classList.toggle('active-mode',m==='all');
+  document.getElementById('modeWrong').classList.toggle('active-mode',m==='wrong');
+  buildDeck(); render();
+}
+
+function setModule(m) {
+  currentModule=m;
+  document.querySelectorAll('.mod-btn').forEach(b=>b.classList.toggle('active',b.dataset.mod===m));
+  buildDeck(); render();
+}
+
+function navigate(d) { revealed=false; currentIdx=Math.max(0,Math.min(deck.length-1,currentIdx+d)); render(); }
+function revealAnswer() { revealed=true; render(); }
+
+function markCard(correct) {
+  if (!revealed) { revealAnswer(); return; }
+  const oi = deck[currentIdx].origIdx;
+  if (correct) { correctSet.add(oi); wrongSet.delete(oi); }
+  else         { wrongSet.add(oi);   correctSet.delete(oi); }
+  updateStats(); updateWrongList();
+  revealed=false; if(currentIdx<deck.length-1) currentIdx++; render();
+}
+
+function resetAll() { correctSet.clear(); wrongSet.clear(); currentIdx=0; revealed=false; buildDeck(); render(); }
+function toggleWrongPanel() { document.getElementById('wrongPanel').classList.toggle('open'); }
+
+function jumpToCard(oi) {
+  const i=deck.findIndex(c=>c.origIdx===oi);
+  if(i>=0){currentIdx=i;revealed=false;render();document.getElementById('wrongPanel').classList.remove('open');}
+}
+
+function updateStats() {
+  const tot=CARDS_RAW.length, c=correctSet.size, w=wrongSet.size;
+  document.getElementById('statTotal').textContent=tot;
+  document.getElementById('statCorrect').textContent=c;
+  document.getElementById('statWrong').textContent=w;
+  document.getElementById('statRemaining').textContent=tot-c-w;
+  document.getElementById('progressFill').style.width=(tot>0?(c+w)/tot*100:0)+'%';
+  document.getElementById('totalCount').textContent=tot;
+  document.getElementById('chapterCount').textContent=Object.keys(chapters).length;
+}
+
+function updateWrongList() {
+  const cnt=document.getElementById('wrongCount'), list=document.getElementById('wrongList');
+  cnt.textContent=`(${wrongSet.size})`;
+  document.getElementById('modeWrong').textContent=`🔁 Revise Wrong (${wrongSet.size})`;
+  if(!wrongSet.size){list.innerHTML='<div class="wrong-item" style="color:var(--green)">✓ No mistakes yet!</div>';return;}
+  list.innerHTML=[...wrongSet].map(i=>{const c=CARDS_RAW[i]; return `<div class="wrong-item" onclick="jumpToCard(${i})">↗ ${(c?.q||'').slice(0,80)}${(c?.q||'').length>80?'…':''}</div>`;}).join('');
+}
+
+function buildModuleRow() {
+  document.getElementById('moduleRow').innerHTML = getModules().map(m=>`
+    <button class="mod-btn ${m===currentModule?'active':''}" data-mod="${m}" onclick="setModule(${JSON.stringify(m)})">${m==='all'?'All':m}</button>`).join('');
+}
+
+function render() {
+  const content=document.getElementById('mainContent');
+  updateStats(); updateWrongList();
+
+  if (!CARDS_RAW.length) {
+    content.innerHTML=`<div class="state-card"><div class="state-icon">📭</div><div class="state-title" style="color:var(--accent)">No cards yet</div><div class="state-sub">Tap <b>＋ Add Chapter</b> above to paste your notes and let Claude extract flashcards automatically.</div></div>`;
+    document.getElementById('navRow').style.display='none'; return;
+  }
+  if (!deck.length) {
+    content.innerHTML=`<div class="state-card"><div class="state-icon">🤔</div><div class="state-title" style="color:var(--yellow)">No cards match</div><div class="state-sub">Try a different module or switch to 'All Cards' mode.</div></div>`;
+    document.getElementById('navRow').style.display='none'; return;
+  }
+
+  document.getElementById('navRow').style.display='flex';
+  if(currentIdx>=deck.length)currentIdx=deck.length-1;
+  const card=deck[currentIdx], oi=card.origIdx;
+  const isC=correctSet.has(oi), isW=wrongSet.has(oi);
+  const glow=isC?'correct-glow':isW?'wrong-glow':'';
+  const badge=isC?`<span style="color:var(--green);font-size:10px;font-family:'JetBrains Mono',monospace">✓ CORRECT</span>`:isW?`<span style="color:var(--red);font-size:10px;font-family:'JetBrains Mono',monospace">✗ MISSED</span>`:'';
+
+  content.innerHTML=`
+    <div class="card-wrap">
+      <div class="card ${revealed?'revealed':''} ${glow}">
+        <div class="card-module">${card.module}<span class="card-counter">${currentIdx+1}/${deck.length}</span>${badge}</div>
+        <div class="question-text">${card.q}</div>
+        ${!revealed?`<div class="reveal-hint" onclick="revealAnswer()">↓ Tap to reveal answer</div>`:`
+        <div class="answer-block shown">
+          <div class="answer-label">// answer</div>
+          <div class="answer-text">${card.a}</div>
+          <div class="judgment-row">
+            <button class="j-btn j-correct" onclick="markCard(true)">✓ Got It</button>
+            <button class="j-btn j-wrong"   onclick="markCard(false)">✗ Missed It</button>
+          </div>
+        </div>`}
+      </div>
+    </div>`;
+  document.getElementById('btnPrev').disabled=currentIdx===0;
+  document.getElementById('btnNext').disabled=currentIdx===deck.length-1;
+}
+
+// ═══════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if(document.getElementById('drawerOverlay').classList.contains('open')){if(e.key==='Escape')closeDrawer();return;}
+  switch(e.key){
+    case ' ': e.preventDefault(); if(!revealed)revealAnswer(); break;
+    case 'ArrowRight': navigate(1); break;
+    case 'ArrowLeft':  navigate(-1); break;
+    case 'g':case 'G': if(revealed)markCard(true); break;
+    case 'w':case 'W': if(revealed)markCard(false); break;
+  }
+});
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+buildModuleRow(); buildDeck(); shuffleDeck();
+</script>
+</body>
+</html>
