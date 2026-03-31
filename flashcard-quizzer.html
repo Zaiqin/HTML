@@ -244,7 +244,7 @@
   </div>
 
   <div class="kb-hint">
-    <span class="kb-key"><span class="key">Space</span> Reveal</span>
+    <span class="kb-key"><span class="key">Space or /</span> Reveal</span>
     <span class="kb-key"><span class="key">→</span> / <span class="key">←</span> Navigate</span>
     <span class="kb-key"><span class="key">↑</span> Correct</span>
     <span class="kb-key"><span class="key">↓</span> Wrong</span>
@@ -1367,6 +1367,7 @@ document.addEventListener('keydown', e => {
   if(document.getElementById('drawerOverlay').classList.contains('open')){if(e.key==='Escape')closeDrawer();return;}
   switch(e.key){
     case ' ': e.preventDefault(); if(!revealed)revealAnswer(); break;
+    case '/': e.preventDefault(); if(!revealed)revealAnswer(); break;
     case 'ArrowRight': navigate(1); break;
     case 'ArrowLeft':  navigate(-1); break;
     case 'ArrowUp': if(revealed)markCard(true); break;
